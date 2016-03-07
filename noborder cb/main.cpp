@@ -16,10 +16,10 @@ NOTIFYICONDATA ni;
 UINT msgTaskbarCreated;
 std::vector<TARGET*> targets;
 
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPTSTR lpCmdLine,
-	_In_ int nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPTSTR lpCmdLine,
+	int nCmdShow)
 {
 	// Init
 	UNREFERENCED_PARAMETER(hPrevInstance);
@@ -92,7 +92,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	default:
-		if (message == msgTaskbarCreated) { AddNotifyIcon(); }
+		if (message == msgTaskbarCreated) { AddNotifyIcon();  }
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;

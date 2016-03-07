@@ -6,16 +6,13 @@
 --------------------Configuration: noborder tiny - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating command line "rc.exe /l 0x409 /fo"Release/resource.res" /d "NDEBUG" "C:\MyProjects\noborder tiny\resource.rc"" 
-Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSPD6.tmp" with contents
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP303.tmp" with contents
 [
 /nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D _WIN32_WINNT=0x0500 /Fo"Release/" /Fd"Release/" /FD /c 
-"C:\MyProjects\noborder tiny\core.cpp"
-"C:\MyProjects\noborder tiny\main.cpp"
-"C:\MyProjects\noborder tiny\ui.cpp"
+"C:\Documents and Settings\Administrator\Desktop\noborder tiny vc6\core.cpp"
 ]
-Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSPD6.tmp" 
-Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSPD7.tmp" with contents
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP303.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP304.tmp" with contents
 [
 kernel32.lib user32.lib shell32.lib msvcrt.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/noborder tiny.pdb" /machine:I386 /nodefaultlib /out:"Release/noborder tiny.exe" /align:4096 
 ".\Release\core.obj"
@@ -23,22 +20,17 @@ kernel32.lib user32.lib shell32.lib msvcrt.lib /nologo /subsystem:windows /incre
 ".\Release\ui.obj"
 ".\Release\resource.res"
 ]
-Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSPD7.tmp"
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP304.tmp"
 <h3>Output Window</h3>
-Compiling resources...
 Compiling...
 core.cpp
-main.cpp
-C:\MyProjects\noborder tiny\main.cpp(114) : warning C4554: '&' : check operator precedence for possible error; use parentheses to clarify precedence
-ui.cpp
-Generating Code...
 Linking...
 LINK : warning LNK4108: /ALIGN specified without /DRIVER or /VXD; image may not run
 
 
 
 <h3>Results</h3>
-noborder tiny.exe - 0 error(s), 2 warning(s)
+noborder tiny.exe - 0 error(s), 1 warning(s)
 </pre>
 </body>
 </html>

@@ -19,7 +19,7 @@ static const TCHAR * NBD_TRAYICON_TEXT = NBD_APP_TITLE;
 static const TCHAR * NBD_CMI_ABOUT = _T("About");
 static const TCHAR * NBD_CMI_EXIT = _T("Exit");
 static const TCHAR * NBD_APP_DESC = _T(
-	"Version 1.1 . by Raymai97 . in VS2015\n\n" \
+	"Version 1.1 . by Raymai97 . in CodeBlocks 16.01\n\n" \
 	"Press ALT+BACKSPACE to switch current application into 'Borderless Fullscreen'. " \
 	"Press again will return back to normal.");
 
@@ -55,7 +55,8 @@ SIZE getDesktopSize();
 // Global variables
 extern HANDLE hMutex;
 extern HINSTANCE hInst;
-extern HWND hWnd; 
+extern HWND hWnd;
 extern NOTIFYICONDATA ni;
 extern UINT msgTaskbarCreated;
 extern std::vector<TARGET*> targets;
+

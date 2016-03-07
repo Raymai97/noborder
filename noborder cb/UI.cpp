@@ -13,7 +13,7 @@ void AddNotifyIcon()
 
 	Shell_NotifyIcon(NIM_ADD, &ni);
 
-	if (ni.hIcon && DestroyIcon(ni.hIcon)) ni.hIcon = NULL;
+	if (ni.hIcon && DestroyIcon(ni.hIcon)) ni.hIcon = nullptr;
 }
 
 HWND CreateDummyWindow()
@@ -58,7 +58,7 @@ void ShowContextMenu(HWND hWnd)
 		InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
 		InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
 		InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
-		
+
 		SetForegroundWindow(hWnd); // else menu won't disappear when lose focus
 		TrackPopupMenu(hMenu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, hWnd, NULL);
 		DestroyMenu(hMenu);

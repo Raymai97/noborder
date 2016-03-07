@@ -11,7 +11,7 @@
 #define SWM_ABOUT		WM_APP + 1
 #define SWM_EXIT		WM_APP + 2
 
-static const TCHAR * NBD_APP_TITLE = _T("noborder v1.0");
+static const TCHAR * NBD_APP_TITLE = _T("noborder v1.1");
 static const TCHAR * NBD_MUTEX_NAME = _T("NOBORDER MUTEX");
 static const TCHAR * NBD_DUMMY = _T("NOBORDER DUMMY");
 static const TCHAR * NBD_ERROR_ALREADY_RUNNING = _T("Error! noborder is already running!");
@@ -19,7 +19,7 @@ static const TCHAR * NBD_TRAYICON_TEXT = NBD_APP_TITLE;
 static const TCHAR * NBD_CMI_ABOUT = _T("About");
 static const TCHAR * NBD_CMI_EXIT = _T("Exit");
 static const TCHAR * NBD_APP_DESC = _T(
-	"Ver tiny 1.0 . by Raymai97 . in VS6.0 from VS2015\n\n" \
+	"Ver tiny 1.1 . by Raymai97 . in VS6.0 from VS2015\n\n" \
 	"Press ALT+BACKSPACE to switch current application into 'Borderless Fullscreen'. " \
 	"Press again will return back to normal.");
 
@@ -44,6 +44,7 @@ public:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 // UI.cpp
+void AddNotifyIcon();
 HWND CreateDummyWindow();
 void ShowContextMenu(HWND hWnd);
 // Core.cpp
@@ -51,8 +52,9 @@ void ToggleNoborder();
 SIZE getDesktopSize();
 
 // Global variables
-static HANDLE hMutex;
-static HINSTANCE hInst;
-static HWND hWnd; 
-static NOTIFYICONDATA ni;
-static std::vector<TARGET*> targets;
+extern HANDLE hMutex;
+extern HINSTANCE hInst;
+extern HWND hWnd; 
+extern NOTIFYICONDATA ni;
+extern UINT msgTaskbarCreated;
+extern std::vector<TARGET*> targets;

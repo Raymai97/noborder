@@ -8,6 +8,14 @@
 
 #include "noborder.h"
 
+// Declare global variables
+HANDLE hMutex;
+HINSTANCE hInst;
+HWND hWnd;
+NOTIFYICONDATA ni;
+UINT msgTaskbarCreated;
+std::vector<TARGET*> targets;
+
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPTSTR lpCmdLine,
@@ -29,20 +37,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		return 0;
 	}
 
-	// Init TrayIcon
-	ZeroMemory(&ni, sizeof(NOTIFYICONDATA));
-	ni.cbSize = sizeof(NOTIFYICONDATA);
-	ni.uID = TRAYICON_ID;
-	ni.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-	ni.hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
-	ni.hWnd = hWnd;
-	ni.uCallbackMessage = SWM_TRAYMSG;
-
-	lstrcpyn(ni.szTip, NBD_TRAYICON_TEXT, sizeof(ni.szTip) / sizeof(TCHAR));
-
-	Shell_NotifyIcon(NIM_ADD, &ni);
-
-	if (ni.hIcon && DestroyIcon(ni.hIcon)) ni.hIcon = NULL;
+	// Init Tray Icon
+	AddNotifyIcon();
+	msgTaskbarCreated = RegisterWindowMessage(_T("TaskbarCreated"));
 
 	// Install the low-level keyboard & mouse hooks
 	HHOOK hhkLowLevelKybd = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
@@ -95,6 +92,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	}
 	default:
+		if (message == msgTaskbarCreated) { AddNotifyIcon(); }
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
@@ -111,8 +109,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
-			fEatKeystroke = ( p->vkCode == TOGGLE_KEY & (GetAsyncKeyState(TOGGLE_MOD) != 0) )
-				;
+			fEatKeystroke = ( (p->vkCode == TOGGLE_KEY) & (GetAsyncKeyState(TOGGLE_MOD) < 0) );
 			if (fEatKeystroke) ToggleNoborder();
 			break;
 		}

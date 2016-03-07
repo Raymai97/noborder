@@ -1,5 +1,21 @@
 #include "noborder.h"
 
+void AddNotifyIcon()
+{
+	ZeroMemory(&ni, sizeof(NOTIFYICONDATA));
+	ni.cbSize = sizeof(NOTIFYICONDATA);
+	ni.uID = TRAYICON_ID;
+	ni.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
+	ni.hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+	ni.hWnd = hWnd;
+	ni.uCallbackMessage = SWM_TRAYMSG;
+	lstrcpyn(ni.szTip, NBD_TRAYICON_TEXT, sizeof(ni.szTip) / sizeof(TCHAR));
+
+	Shell_NotifyIcon(NIM_ADD, &ni);
+
+	if (ni.hIcon && DestroyIcon(ni.hIcon)) ni.hIcon = nullptr;
+}
+
 HWND CreateDummyWindow()
 {
 	// Register the window class

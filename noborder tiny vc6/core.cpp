@@ -52,8 +52,9 @@ void ToggleNoborder()
 		int y = 0;
 		int width = cr.right - cr.left;
 		int height = cr.bottom - cr.top;
-		// must assign 'width(int)' to 'ratio(double)' first, else decimal place would be eaten :(
-		double ratio = (ratio = width) / height;
+		// if simply 'int/int', decimal place would be eaten :(
+		double ratio = width;
+		ratio /= height;
 		SIZE s = getDesktopSize();
 		if (s.cx > s.cy && !(s.cy * ratio > s.cx))
 		{
