@@ -8,13 +8,16 @@
 
 #include "noborder.h"
 
-// Declare global variables
-HANDLE hMutex;
+// For all cpp
 HINSTANCE hInst;
 HWND hWnd;
-NOTIFYICONDATA ni;
+bool excludeTaskbar;
+AOT alwaysOnTopMode;
+
+// Only this cpp
+HANDLE hMutex;
 UINT msgTaskbarCreated;
-std::vector<TARGET*> targets;
+TCHAR myExeDir[MAX_PATH];
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -44,6 +47,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// Install the low-level keyboard & mouse hooks
 	HHOOK hhkLowLevelKybd = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
 
+	// Find out myExeDir and Load Config
+	GetModuleFileName(GetModuleHandle(NULL), myExeDir, MAX_PATH);
+	for (size_t i = _tcslen(myExeDir); i--> 0;)
+	{
+		if (myExeDir[i] == '\\') { myExeDir[i + 1] = '\0'; break; }
+	}
+	LoadConfig();
+
 	// Main message loop
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -52,8 +63,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		DispatchMessage(&msg);
 	}
 
+	SaveConfig();
 	UnhookWindowsHookEx(hhkLowLevelKybd);
-	Shell_NotifyIcon(NIM_DELETE, &ni);
+	RemoveNotifyIcon();
 	ReleaseMutex(hMutex);
 
 	return (int)msg.wParam;
@@ -83,6 +95,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		switch (wmId)
 		{
+		case SWM_AOT_AUTO: alwaysOnTopMode = AOT_AUTO; break;
+		case SWM_AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
+		case SWM_AOT_NEVER:	 alwaysOnTopMode = AOT_NEVER; break;
+		case SWM_EXCLUDE_TASKBAR: excludeTaskbar = !excludeTaskbar; break;
 		case SWM_ABOUT:
 			MessageBox(hWnd, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION);
 			break;
@@ -116,6 +132,39 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	}
 
 	return (fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
+}
+
+
+void LoadConfig()
+{
+	TCHAR filePath[MAX_PATH];
+	_tcscpy(filePath, myExeDir);
+	_tcscat(filePath, NBD_CONFIG_FILENAME);
+	HANDLE hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile)
+	{
+		DWORD byteCount;
+		ReadFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
+		ReadFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
+		CloseHandle(hFile);
+	}
+}
+
+void SaveConfig()
+{
+	TCHAR filePath[MAX_PATH];
+	_tcscpy(filePath, myExeDir);
+	_tcscat(filePath, NBD_CONFIG_FILENAME);
+	HANDLE hFile = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile)
+	{
+		DWORD byteCount;
+		WriteFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
+		WriteFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
+		CloseHandle(hFile);
+	}
 }
 
 

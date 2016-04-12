@@ -12,10 +12,15 @@ In another words, we reuse the already-existed TARGET in 'targets', thus have no
 
 */
 
+std::vector<TARGET*> targets;
+HMONITOR hMonitor;
+RECT screenRect;
+
 void ToggleNoborder()
 {
 	HWND hWndOfTarget = GetForegroundWindow();
 	TARGET * old = NULL;
+	HWND hWndInsertAfter;
 
 	for (TARGET * t : targets)
 	{
@@ -41,8 +46,9 @@ void ToggleNoborder()
 	if (old->nobordered == false)
 	{
 		old->nobordered = true;
-		// save the original window position and size
+		// save the original window pos, size, style...
 		old->style = GetWindowLong(hWndOfTarget, GWL_STYLE);
+		old->exstyle = GetWindowLong(hWndOfTarget, GWL_EXSTYLE);
 		GetWindowRect(hWndOfTarget, &old->rect);
 		// maintain aspect ratio based on ClientSize
 		RECT cr; GetClientRect(old->hWnd, &cr);
@@ -52,7 +58,11 @@ void ToggleNoborder()
 		int height = cr.bottom - cr.top;
 		// if simply 'int/int', decimal place would be eaten :(
 		double ratio = (double)width / height;
-		SIZE s = getDesktopSize();
+		// find out RECT of screen containing the window
+		hMonitor = MonitorFromWindow(old->hWnd, MONITOR_DEFAULTTOPRIMARY);
+		EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, NULL);
+		SIZE s = { screenRect.right - screenRect.left,
+			screenRect.bottom - screenRect.top };
 		if (s.cx > s.cy && !(s.cy * ratio > s.cx))
 		{
 			width = s.cy * ratio;
@@ -65,8 +75,14 @@ void ToggleNoborder()
 			height = s.cx / ratio;
 			y = (s.cy - height) / 2;
 		}
+		x += screenRect.left;
+		y += screenRect.top;
 		SetWindowLong(old->hWnd, GWL_STYLE, old->style & ~KEY_STYLE);
-		SetWindowPos(old->hWnd, HWND_TOPMOST, x, y, width, height, SWP_SHOWWINDOW);
+		hWndInsertAfter = (
+			alwaysOnTopMode == AOT_ALWAYS ? HWND_TOPMOST : (
+			alwaysOnTopMode == AOT_NEVER ? HWND_NOTOPMOST : 
+			excludeTaskbar ? HWND_NOTOPMOST : HWND_TOPMOST));
+		SetWindowPos(old->hWnd, hWndInsertAfter, x, y, width, height, SWP_SHOWWINDOW);
 	}
 	else // restore the original window size and position
 	{
@@ -76,10 +92,24 @@ void ToggleNoborder()
 		int width = old->rect.right - x;
 		int height = old->rect.bottom - y;
 		SetWindowLong(old->hWnd, GWL_STYLE, old->style);
-		SetWindowPos(old->hWnd, HWND_NOTOPMOST, x, y, width, height, SWP_SHOWWINDOW);
+		hWndInsertAfter = (old->exstyle & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST;
+		SetWindowPos(old->hWnd, hWndInsertAfter, x, y, width, height, SWP_SHOWWINDOW);
 	}
 }
 
+BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData)
+{
+	if (h == hMonitor)
+	{
+		MONITORINFO info;
+		info.cbSize = sizeof(MONITORINFO);
+		GetMonitorInfo(h, &info);
+		screenRect = (excludeTaskbar ? info.rcWork : info.rcMonitor);
+	}
+	return true;
+}
+
+/* Old code : Doesn't support multiple monitors
 
 SIZE getDesktopSize()
 {
@@ -90,5 +120,4 @@ SIZE getDesktopSize()
 	size.cx = rect.right;
 	size.cy = rect.bottom;
 	return size;
-}
-
+} */

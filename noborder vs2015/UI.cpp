@@ -1,5 +1,7 @@
 #include "noborder.h"
 
+NOTIFYICONDATA ni;
+
 void AddNotifyIcon()
 {
 	ZeroMemory(&ni, sizeof(NOTIFYICONDATA));
@@ -14,6 +16,11 @@ void AddNotifyIcon()
 	Shell_NotifyIcon(NIM_ADD, &ni);
 
 	if (ni.hIcon && DestroyIcon(ni.hIcon)) ni.hIcon = nullptr;
+}
+
+void RemoveNotifyIcon()
+{
+	Shell_NotifyIcon(NIM_DELETE, &ni);
 }
 
 HWND CreateDummyWindow()
@@ -56,8 +63,35 @@ void ShowContextMenu(HWND hWnd)
 	{
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
 		InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
+		HMENU hAOTMenu = CreatePopupMenu();
+		if (hAOTMenu)
+		{
+			InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
+			InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
+			InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
+			InsertMenu(hMenu, -1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
+		}
+		InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
+		InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
 		InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
 		InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
+
+		if (excludeTaskbar)
+		{
+			CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED);
+		}
+		switch (alwaysOnTopMode)
+		{
+		case AOT_AUTO:
+			CheckMenuItem(hMenu, SWM_AOT_AUTO, MF_BYCOMMAND | MF_CHECKED);
+			break;
+		case AOT_ALWAYS:
+			CheckMenuItem(hMenu, SWM_AOT_ALWAYS, MF_BYCOMMAND | MF_CHECKED);
+			break;
+		case AOT_NEVER:
+			CheckMenuItem(hMenu, SWM_AOT_NEVER, MF_BYCOMMAND | MF_CHECKED);
+			break;
+		}
 		
 		SetForegroundWindow(hWnd); // else menu won't disappear when lose focus
 		TrackPopupMenu(hMenu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, hWnd, NULL);

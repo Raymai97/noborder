@@ -1,3 +1,9 @@
+v1.2 (12 April 2016)
+* ADDED: Multiple monitor support
+* ADDED: Options like "Exclude Taskbar" and "Always on Top"
+* ADDED: "noborder.config" as config file
+* FIXED: Old ver always disable "Always on Top" when undo "noborder"
+
 v1.1 (7 March 2016)
-* FIXED: Notify Icon (in SysTray) will be recreated when Explorer is restarted
+* FIXED: Finally, Notify Icon will be recreated when Explorer is restarted
 * FIXED: In v1.0, if ALT was pressed and released, 'noborder' will be triggered if you press Backspace
