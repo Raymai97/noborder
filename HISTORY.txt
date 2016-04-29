@@ -1,3 +1,9 @@
+v1.3 (28 April 2016)
+* ADDED: DWM formula, now even 3D Pinball (WinXP) can be 'nobordered'!
+* ADDED: Auto undo 'noborder' (e.g. when exiting noborder)
+* OTHER: No more multiple 'noborder' window at once
+* OTHER: Some messages use NotifyIcon Balloon instead of MessageBox
+
 v1.2 (12 April 2016)
 * ADDED: Multiple monitor support
 * ADDED: Options like "Exclude Taskbar" and "Always on Top"

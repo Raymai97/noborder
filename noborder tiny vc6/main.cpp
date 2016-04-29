@@ -1,23 +1,43 @@
-/* noborder
-   Switch a running Win32 program to 'Borderless Fullscreen'.
-   Press ALT+BACKSPACE to toggle.
+/* noborder, the 'Borderless' mode switch, by Raymai97
 
-   Author: Raymai97
-     Date: 5/12/2015
+Version 1.3 (28 April 2016) - What's new
+
+* Refactored to be more OOP
+The number of functions has increased dramatically now,
+but I think it's better than mixing many things in a function.
+NotifyIcon is an independent class now.
+
+* No more multiple 'noborder' window at once
+This is to make things easier - such as implementing DWM formula.
+Plus, I bet no one need this feature anyway.
+
+* New mode available: DWM formula
+Some games won't scale their graphics after window is resized.
+With a DWM API, the graphics can be scaled nicely (smoothed out), 
+but since the API wasn't really designed for this purpose...
+This mode is only OK for keyboard-only game, at least for now.
+
+* Automatically undo 'noborder' when...
+  ~ 'noborder'-ing another window
+  ~ exiting 'noborder'
+  ~ 'nobordered' window has pop-up (DWM formula only)
+
 */
 
 #include "noborder.h"
 
 // For all cpp
 HINSTANCE hInst;
-HWND hWnd;
+NotifyIcon *notifyIcon;
+bool canUseDWM;
 bool excludeTaskbar;
 AOT alwaysOnTopMode;
+bool useDWM;
 
 // Only this cpp
 HANDLE hMutex;
-UINT msgTaskbarCreated;
-TCHAR myExeDir[MAX_PATH];
+HWND hWnd;
+TCHAR cfgFilePath[MAX_PATH];
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -25,37 +45,70 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	int nCmdShow)
 {
 	// Init
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-	UNREFERENCED_PARAMETER(nCmdShow);
+	if (!InitWinAPIX())
+	{
+		MSGERR("FATAL: InitWinAPIX failed!");
+	}
 	hInst = hInstance;
-	hWnd = CreateDummyWindow();
-	if (!hWnd) return FALSE;
-
+	
 	// Don't continue if noborder is already running
 	hMutex = CreateMutex(NULL, true, NBD_MUTEX_NAME);
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-		MessageBox(NULL, NBD_ERROR_ALREADY_RUNNING, NULL, MB_OK | MB_ICONSTOP);
+		bool gotIt = false;
+		HWND hWnd = FindWindowEx(HWND_MESSAGE, NULL, NBD_DUMMY_MSG, NBD_DUMMY_MSG);
+		if (hWnd) { gotIt = (SendMessage(hWnd, PREVINST_CALL, 0, 0) == PREVINST_CALL); }
+		// If prev instance is old ver / Explorer not running...
+		if (!gotIt) { MSGERR("noborder is already running!"); }
 		return 0;
 	}
 
-	// Init Tray Icon
-	AddNotifyIcon();
-	msgTaskbarCreated = RegisterWindowMessage(_T("TaskbarCreated"));
-
-	// Install the low-level keyboard & mouse hooks
-	HHOOK hhkLowLevelKybd = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
-
-	// Find out myExeDir and Load Config
-	GetModuleFileName(GetModuleHandle(NULL), myExeDir, MAX_PATH);
-	for (size_t i = _tcslen(myExeDir); i--> 0;)
+	// Create message-only window
+	WNDCLASSEX wcex;
+	ZeroMemory(&wcex, sizeof(wcex));
+	wcex.cbSize = sizeof(wcex);
+	wcex.hInstance = hInst;
+	wcex.lpszClassName = NBD_DUMMY_MSG;
+	wcex.lpfnWndProc = WndProc;
+	if (!RegisterClassEx(&wcex) ||
+		!CreateWindow(NBD_DUMMY_MSG, NBD_DUMMY_MSG, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInst, 0))
 	{
-		if (myExeDir[i] == '\\') { myExeDir[i + 1] = '\0'; break; }
+		MSGERR("FATAL: MsgWindow creation failed!"); return 1;
 	}
+
+	// Init Notify Icon
+	notifyIcon = new NotifyIcon(hInst, NBD_DUMMY_NI, NOTIFYICON_ID);
+	if (notifyIcon->HwndInitFailed()) { MSGERR("FATAL: NotifyIcon creation failed!"); return 1; }
+	notifyIcon->SetTip(NBD_TRAYICON_TIP);
+	notifyIcon->SetIcon((HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_SHARED));
+	notifyIcon->OnMenuItemSelected = MenuItemSelectedProc;
+	notifyIcon->OnMenuCreating = MenuCreatingProc;
+
+	// Install the low-level keyboard hooks
+	HHOOK hhk = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+	if (!hhk) { MSGERR("FATAL: SetWindowsHookEx WH_KEYBOARD_LL failed!"); return 1; }
+
+	// Find out cfgFilePath and load it
+	GetModuleFileName(GetModuleHandle(NULL), cfgFilePath, MAX_PATH);
+	for (size_t i = _tcslen(cfgFilePath); i--> 0;)
+	{
+		if (cfgFilePath[i] == '\\') { cfgFilePath[i + 1] = '\0'; break; }
+	}
+	_tcscat(cfgFilePath, NBD_CONFIG_FILENAME);
 	LoadConfig();
 
-	// Main message loop
+	// Check OS & Init Core.cpp
+	DWORD osver = GetVersion();
+	BYTE major = LOBYTE(LOWORD(osver));
+	BYTE minor = HIBYTE(LOWORD(osver));
+	canUseDWM = (major >= 6);
+	if (canUseDWM && !InitDwmAPI())
+	{
+		MSGERR("FATAL: InitDwmAPI failed!");
+		PostQuitMessage(1);
+	}
+	CoreInit();
+
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -63,61 +116,29 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		DispatchMessage(&msg);
 	}
 
+	CoreClosing();
 	SaveConfig();
-	UnhookWindowsHookEx(hhkLowLevelKybd);
-	RemoveNotifyIcon();
+	UnhookWindowsHookEx(hhk);
+	delete notifyIcon;
 	ReleaseMutex(hMutex);
-
 	return (int)msg.wParam;
 }
 
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	int wmId, wmEvent;
-
-	switch (message)
+	if (msg == PREVINST_CALL && notifyIcon->ShowBalloon(
+		_T("You can find me here."), _T("noborder is already running!"), NIIF_INFO))
 	{
-	case SWM_TRAYMSG:
-	{
-		switch (lParam)
-		{
-		case WM_RBUTTONDOWN:
-		case WM_CONTEXTMENU:
-			ShowContextMenu(hWnd);
-			break;
-		}
+		// tell 'new instance' that 'ShowBalloon' is OK
+		return PREVINST_CALL; 
 	}
-	case WM_COMMAND:
-	{
-		wmId = LOWORD(wParam);
-		wmEvent = HIWORD(wParam);
-
-		switch (wmId)
-		{
-		case SWM_AOT_AUTO: alwaysOnTopMode = AOT_AUTO; break;
-		case SWM_AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
-		case SWM_AOT_NEVER:	 alwaysOnTopMode = AOT_NEVER; break;
-		case SWM_EXCLUDE_TASKBAR: excludeTaskbar = !excludeTaskbar; break;
-		case SWM_ABOUT:
-			MessageBox(hWnd, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION);
-			break;
-		case SWM_EXIT:
-			PostQuitMessage(0);
-			break;
-		}
-	}
-	default:
-		if (message == msgTaskbarCreated) { AddNotifyIcon(); }
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-	return 0;
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	BOOL fEatKeystroke = FALSE;
-
 	if (nCode == HC_ACTION)
 	{
 		switch (wParam)
@@ -130,41 +151,84 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-
-	return (fEatKeystroke ? 1 : CallNextHookEx(NULL, nCode, wParam, lParam));
+	return (fEatKeystroke ? TRUE : CallNextHookEx(NULL, nCode, wParam, lParam));
 }
 
 
+void MenuCreatingProc(UINT niId, HMENU hMenu)
+{
+	InsertMenu(hMenu, -1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
+	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
+	HMENU hAOTMenu = CreatePopupMenu();
+	if (hAOTMenu)
+	{
+		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
+		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
+		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
+	}
+	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
+	if (canUseDWM) { InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
+	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
+	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
+	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
+
+	if (excludeTaskbar) { CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED); }
+	switch (alwaysOnTopMode)
+	{
+	case AOT_AUTO:
+		CheckMenuItem(hMenu, SWM_AOT_AUTO, MF_BYCOMMAND | MF_CHECKED);
+		break;
+	case AOT_ALWAYS:
+		CheckMenuItem(hMenu, SWM_AOT_ALWAYS, MF_BYCOMMAND | MF_CHECKED);
+		break;
+	case AOT_NEVER:
+		CheckMenuItem(hMenu, SWM_AOT_NEVER, MF_BYCOMMAND | MF_CHECKED);
+		break;
+	}
+	if (useDWM) { CheckMenuItem(hMenu, SWM_USE_DWM, MF_BYCOMMAND | MF_CHECKED); }
+}
+
+void MenuItemSelectedProc(WORD id, WORD event)
+{
+	switch (id)
+	{
+	case SWM_AOT_AUTO: alwaysOnTopMode = AOT_AUTO; break;
+	case SWM_AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
+	case SWM_AOT_NEVER:	 alwaysOnTopMode = AOT_NEVER; break;
+	case SWM_EXCLUDE_TASKBAR: excludeTaskbar = !excludeTaskbar; break;
+	case SWM_USE_DWM: useDWM = !useDWM; break;
+	case SWM_ABOUT:
+		MessageBox(NULL, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+		break;
+	case SWM_EXIT: PostQuitMessage(0); break;
+	}
+}
+
 void LoadConfig()
 {
-	TCHAR filePath[MAX_PATH];
-	_tcscpy(filePath, myExeDir);
-	_tcscat(filePath, NBD_CONFIG_FILENAME);
-	HANDLE hFile = CreateFile(filePath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile)
 	{
 		DWORD byteCount;
 		ReadFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
 		ReadFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
+		ReadFile(hFile, &useDWM, 1, &byteCount, NULL);
 		CloseHandle(hFile);
 	}
 }
 
 void SaveConfig()
 {
-	TCHAR filePath[MAX_PATH];
-	_tcscpy(filePath, myExeDir);
-	_tcscat(filePath, NBD_CONFIG_FILENAME);
-	HANDLE hFile = CreateFile(filePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile)
 	{
 		DWORD byteCount;
 		WriteFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
 		WriteFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
+		WriteFile(hFile, &useDWM, 1, &byteCount, NULL);
 		CloseHandle(hFile);
 	}
 }
-
-
