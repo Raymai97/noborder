@@ -6,19 +6,15 @@
 --------------------Configuration: noborder tiny - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating command line "rc.exe /l 0x409 /fo"Release/resource.res" /d "NDEBUG" "C:\Users\Raymai\Desktop\noborder tiny vc6\resource.rc"" 
-Creating temporary file "C:\Users\Raymai\AppData\Local\Temp\RSP3576.tmp" with contents
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP46.tmp" with contents
 [
 /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /FR"Release/" /Fo"Release/" /Fd"Release/" /FD /c 
-"C:\Users\Raymai\Desktop\noborder tiny vc6\_dwmapi.cpp"
-"C:\Users\Raymai\Desktop\noborder tiny vc6\_winapi_extend.cpp"
-"C:\Users\Raymai\Desktop\noborder tiny vc6\Core.cpp"
-"C:\Users\Raymai\Desktop\noborder tiny vc6\DwmWindow.cpp"
-"C:\Users\Raymai\Desktop\noborder tiny vc6\main.cpp"
-"C:\Users\Raymai\Desktop\noborder tiny vc6\NotifyIcon.cpp"
+"C:\Documents and Settings\Administrator\Desktop\noborder tiny vc6\Core.cpp"
+"C:\Documents and Settings\Administrator\Desktop\noborder tiny vc6\DwmWindow.cpp"
+"C:\Documents and Settings\Administrator\Desktop\noborder tiny vc6\main.cpp"
 ]
-Creating command line "cl.exe @C:\Users\Raymai\AppData\Local\Temp\RSP3576.tmp" 
-Creating temporary file "C:\Users\Raymai\AppData\Local\Temp\RSP3577.tmp" with contents
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP46.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP47.tmp" with contents
 [
 kernel32.lib user32.lib shell32.lib gdi32.lib msvcrt.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/noborder tiny.pdb" /machine:I386 /nodefaultlib /out:"Release/noborder tiny.exe" /align:4096 
 ".\Release\_dwmapi.obj"
@@ -29,16 +25,12 @@ kernel32.lib user32.lib shell32.lib gdi32.lib msvcrt.lib /nologo /subsystem:wind
 ".\Release\NotifyIcon.obj"
 ".\Release\resource.res"
 ]
-Creating command line "link.exe @C:\Users\Raymai\AppData\Local\Temp\RSP3577.tmp"
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP47.tmp"
 <h3>Output Window</h3>
-Compiling resources...
 Compiling...
-_dwmapi.cpp
-_winapi_extend.cpp
 Core.cpp
 DwmWindow.cpp
 main.cpp
-NotifyIcon.cpp
 Generating Code...
 Linking...
 LINK : warning LNK4108: /ALIGN specified without /DRIVER or /VXD; image may not run

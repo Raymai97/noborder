@@ -1,3 +1,7 @@
+v1.3.1 (2 May 2016)
+* FIXED: v1.3 wouldn't restore 'Always on Top' when 'DWM formula' was disabled
+* OTHER: Always save config after changing options, and prompt if failed to save
+
 v1.3 (28 April 2016)
 * ADDED: DWM formula, now even 3D Pinball (WinXP) can be 'nobordered'!
 * ADDED: Auto undo 'noborder' (e.g. when exiting noborder)

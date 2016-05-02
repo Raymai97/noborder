@@ -48,7 +48,7 @@ void DwmWindow::Start(Target *target, bool topMost)
 		target->nobordered = false;
 		return;
 	}
-	if ((target->exStyle & WS_EX_LAYERED) == WS_EX_LAYERED)
+	if (HASFLAG(target->exStyle, WS_EX_LAYERED))
 	{
 		notifyIcon->ShowBalloon(
 			_T("DWM formula doesn't work on Layered window."),

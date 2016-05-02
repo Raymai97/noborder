@@ -7,16 +7,13 @@ RECT displayRect;
 
 void CoreInit()
 {
-	if (canUseDWM)
-	{
-		dwmWindow = new DwmWindow();
-	}
+	if (canUseDWM) { dwmWindow = new DwmWindow(); }
 	else { useDWM = false; }
 }
 
 void CoreClosing()
 {
-	UndoNoborder(&target);
+	if (target.nobordered) { UndoNoborder(&target); }
 	if (dwmWindow) { delete dwmWindow; }
 }
 
@@ -59,7 +56,8 @@ void DoNoborder(Target *t)
 	t->psCli = PosSize(wInfo.rcClient);
 	t->psNbd = NoborderPosSize(t->hWnd, t->psCli);
 	t->style = wInfo.dwStyle;
-	t->exStyle = wInfo.dwExStyle;
+	// DON'T USE wInfo.dwExStyle, it gives wrong value!
+	t->exStyle = GetWindowLong(t->hWnd, GWL_EXSTYLE);
 	t->isUsingDwm = useDWM;
 	bool onTop = (
 		alwaysOnTopMode == AOT_ALWAYS ? true :
@@ -95,7 +93,7 @@ void UndoNoborder(Target *t)
 		SetWindowLong(t->hWnd, GWL_STYLE, t->style);
 		SetWindowPos(
 			t->hWnd,
-			HWND_TOP,
+			HASFLAG(t->exStyle, WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST,
 			t->psWin.X,
 			t->psWin.Y,
 			t->psWin.Width,

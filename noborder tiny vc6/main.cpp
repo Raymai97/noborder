@@ -1,26 +1,9 @@
 /* noborder, the 'Borderless' mode switch, by Raymai97
 
-Version 1.3 (28 April 2016) - What's new
+Version 1.3.1 (2 May 2016) - bug fix
 
-* Refactored to be more OOP
-The number of functions has increased dramatically now,
-but I think it's better than mixing many things in a function.
-NotifyIcon is an independent class now.
-
-* No more multiple 'noborder' window at once
-This is to make things easier - such as implementing DWM formula.
-Plus, I bet no one need this feature anyway.
-
-* New mode available: DWM formula
-Some games won't scale their graphics after window is resized.
-With a DWM API, the graphics can be scaled nicely (smoothed out), 
-but since the API wasn't really designed for this purpose...
-This mode is only OK for keyboard-only game, at least for now.
-
-* Automatically undo 'noborder' when...
-  ~ 'noborder'-ing another window
-  ~ exiting 'noborder'
-  ~ 'nobordered' window has pop-up (DWM formula only)
+* FIXED: v1.3 wouldn't restore 'Always on Top' when 'DWM formula' was disabled
+* OTHER: Always save config after changing options, and prompt if failed to save
 
 */
 
@@ -191,44 +174,55 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 
 void MenuItemSelectedProc(WORD id, WORD event)
 {
-	switch (id)
+	if (id == SWM_ABOUT)
 	{
-	case SWM_AOT_AUTO: alwaysOnTopMode = AOT_AUTO; break;
-	case SWM_AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
-	case SWM_AOT_NEVER:	 alwaysOnTopMode = AOT_NEVER; break;
-	case SWM_EXCLUDE_TASKBAR: excludeTaskbar = !excludeTaskbar; break;
-	case SWM_USE_DWM: useDWM = !useDWM; break;
-	case SWM_ABOUT:
 		MessageBox(NULL, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
-		break;
-	case SWM_EXIT: PostQuitMessage(0); break;
+	}
+	else if (id == SWM_EXIT) { PostQuitMessage(0); }
+	else
+	{
+		if (id == SWM_AOT_AUTO) { alwaysOnTopMode = AOT_AUTO; }
+		else if (id == SWM_AOT_ALWAYS) { alwaysOnTopMode = AOT_ALWAYS; }
+		else if (id == SWM_AOT_NEVER) { alwaysOnTopMode = AOT_NEVER; }
+		else if (id == SWM_EXCLUDE_TASKBAR) { excludeTaskbar = !excludeTaskbar; }
+		else if (id == SWM_USE_DWM) { useDWM = !useDWM; }
+		if (!SaveConfig())
+		{
+			TCHAR msg[100] = _T("Failed to write data into ");
+			_tcscat(msg, NBD_CONFIG_FILENAME);
+			notifyIcon->ShowBalloon(msg, _T("Failed to save config!"), NIIF_ERROR);
+		}
 	}
 }
 
-void LoadConfig()
+bool LoadConfig()
 {
 	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile)
 	{
-		DWORD byteCount;
-		ReadFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
-		ReadFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
-		ReadFile(hFile, &useDWM, 1, &byteCount, NULL);
+		DWORD read;
+		ReadFile(hFile, &excludeTaskbar, 1, &read, NULL);
+		ReadFile(hFile, &alwaysOnTopMode, 1, &read, NULL);
+		ReadFile(hFile, &useDWM, 1, &read, NULL);
 		CloseHandle(hFile);
+		return (read > 0);
 	}
+	return false;
 }
 
-void SaveConfig()
+bool SaveConfig()
 {
 	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile)
 	{
-		DWORD byteCount;
-		WriteFile(hFile, &excludeTaskbar, 1, &byteCount, NULL);
-		WriteFile(hFile, &alwaysOnTopMode, 1, &byteCount, NULL);
-		WriteFile(hFile, &useDWM, 1, &byteCount, NULL);
+		DWORD written;
+		WriteFile(hFile, &excludeTaskbar, 1, &written, NULL);
+		WriteFile(hFile, &alwaysOnTopMode, 1, &written, NULL);
+		WriteFile(hFile, &useDWM, 1, &written, NULL);
 		CloseHandle(hFile);
+		return (written > 0);
 	}
+	return false;
 }

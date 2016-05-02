@@ -15,6 +15,7 @@
 
 
 // Define, Const, Class...
+#define HASFLAG(x, f)	((x & f) == f)
 #define MSGERR(x)		MessageBox(NULL, _T(x), _T("noborder Error!"), MB_OK | MB_ICONSTOP | MB_TOPMOST)
 #define NOTIFYICON_ID	1
 #define PREVINST_CALL	WM_APP + 97
@@ -34,9 +35,9 @@ typedef enum
 	AOT_NEVER
 } AOT;
 
-static const TCHAR *NBD_APP_TITLE = _T("noborder v1.3");
+static const TCHAR *NBD_APP_TITLE = _T("noborder v1.3.1");
 static const TCHAR *NBD_APP_DESC =
-	_T("Ver tiny 1.3 . by Raymai97 . in VC6.0 from VS2015\n\n")
+	_T("Ver tiny 1.3.1 . by Raymai97 . in VC6.0 from VS2015\n\n")
 	_T("A tool to switch current window into 'Borderless' mode.\n")
 	_T("Press ALT+BACKSPACE to toggle.");
 static const TCHAR *NBD_MUTEX_NAME = _T("NOBORDER MUTEX");
@@ -147,8 +148,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 void MenuCreatingProc(UINT niId, HMENU hMenu);
 void MenuItemSelectedProc(WORD id, WORD event);
-void LoadConfig();
-void SaveConfig();
+bool LoadConfig();
+bool SaveConfig();
 // Core.cpp
 void CoreInit();
 void CoreClosing();
