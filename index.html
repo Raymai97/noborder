@@ -1,1 +1,66 @@
-testing page
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<script type="text/javascript" src="./helper.js"></script>
+		<link rel="stylesheet" type="text/css" href="./style.css">
+	</head>
+	<body onload="UpdateSShow()">
+		<div id="body">
+			<div id="navbar">
+				<div id="logo"> <a href="./index.html"></a> </div>
+				<div id="navbarItems">
+					<div class="noSelect navbarItem selected"> <a href="./index.html">Home</a> </div>
+					<div class="noSelect navbarItem"> <a href="./faq.html">FAQ</a> </div>
+					<div class="noSelect navbarItem"> <a href="./timeline.html">Timeline</a> </div>
+					<div class="noSelect navbarItem"> <a href="./aboutme.html">About me</a> </div>
+				</div>
+			</div>
+			<div id="content">
+				<div class="box">
+					<div class="boxTitle">Borderless Gaming starts with noborder ~</div>
+					<div class="boxText">
+						<div id="sshow">
+							<div id="sshowOverlay" onclick="OpenSShowHD()">
+								<div class="noSelect" id="sshowTitle"></div>
+							</div>
+							<div class="noSelect" id="sshowPrev" onclick="PrevSShow()">&lt;</div>
+							<div class="noSelect" id="sshowNext" onclick="NextSShow()">&gt;</div>
+						</div>
+						Extermely lightweight and easy to use.<p>
+						Just run the program, activate your game window, and press Alt+Backspace to 'noborder' your game.<p>
+						To restore, simply press the same hotkey again.<p>
+						
+						Features:<p>
+						&bull; Completely portable, no setup required.<br>
+						&bull; Works on Windows 10/8.1/8/7/Vista/XP/2000.<br>
+						&bull; The only Borderless util that utilizes DWM.<br>
+						<span class="note">
+						One doesn't simply scale GDI games (such as 3D Pinball) like noborder.<br>
+						</span>
+						&bull; Compiled with VC2015.<br>
+						<span class="note">
+						If you don't have VC2015 redist for whatever reason, you may run 'noborder tiny.exe' instead, which is compiled with VC6.<br>
+						</span>
+					</div>
+				</div>
+				<div class="box" style="float: left; margin-top: 0; width: 580px;">
+					<div class="boxTitle">noborder in Action ~</div>
+					<div class="boxText">
+						<iframe width="540" height="300" frameborder="0"
+						src="http://www.youtube.com/embed/Ar90lm4TAao">
+						</iframe>
+					</div>
+				</div>
+				<div class="box" style="float: left; margin-top: 0; width: 400px;">
+					<div class="boxTitle">Latest ver: v1.3.1 - Minor bug fixes</div>
+					<div class="boxText">
+					<a href="./noborder_v1.3.1.7z">Download now</a> (18KB 7z)<br>
+					Have trouble extracting the file? Try <a href="http://www.7-zip.org/download.html">7-Zip</a>.<br>
+					Go <a href="./timeline.html">timeline</a> to see what has changed.<p>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</body>
+</html>

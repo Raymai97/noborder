@@ -1,0 +1,182 @@
+body {
+	background-color: #004040;
+	color: #FFFFFF;
+	font-size: 18px;
+	font-family: Tahoma,sans-serif;
+	overflow-y: scroll;
+}
+*, :before, :after {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+a:link, a:hover, a:active, a:visited {
+	color: #A0FFFF;
+}
+.noSelect {
+	-ms-user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+}
+.note {
+	font-size: 12px;
+	font-style: italic;
+}
+
+div#body {
+	position: absolute;
+	top:0; left: 0; right: 0;
+	margin: auto;
+	width: 1024px;
+}
+div#navbar {
+	background-color: #008080;
+	
+	width: 100%;
+	height: 100px;
+	position: absolute;
+	top: 0; left: 0; right: 0;
+	margin: auto;
+	padding: 0px 20px;
+}
+div#logo {
+	position: absolute;
+	top: 0; bottom: 0;
+	margin: auto;
+	
+	width: 250px;
+	height: 80px;
+	
+	background-image: url('./logo.png');
+	background-repeat: no-repeat;
+	background-size: contain;
+}
+div#logo a {
+	/* Make entire div a hyperlink */
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+div#navbarItems {
+	position: absolute;
+	top: 0; bottom: 0; left: 275px;
+	margin: auto;
+	
+	height: 38px;
+}
+div.navbarItem {
+	float: left;
+	margin-left: -1px;
+	
+	width: 180px;
+	height: 38px;
+	line-height: 38px;
+	
+	border: 1px solid #004040;			
+	text-align: center;
+}
+div.navbarItem:hover {
+	background-color: #009595;
+}
+div.navbarItem:active {
+	background-color: #006060;
+}
+div.navbarItem.selected,
+div.navbarItem.selected:hover {
+	background-color: #004040;
+}
+div.navbarItem a:link,
+div.navbarItem a:hover,
+div.navbarItem a:active,
+div.navbarItem a:visited {
+	/* Make entire div a hyperlink */
+	display: block;
+	color: #FFFFFF;
+	text-decoration: none;
+}
+
+div#content {
+	position: absolute;
+	top: 100px;
+	width: 100%;
+}
+
+div.box {
+	margin: 30px 10px;
+	
+	border: 1px solid white;
+	background-color: #008080;
+}
+
+div.boxTitle {
+	padding: 0px 10px;
+	
+	height: 40px;
+	line-height: 40px;
+	
+	background-color: #004040;
+}
+
+div.boxText {
+	padding: 10px 10px;
+	overflow: auto; /* clearfix: prevent the float element from overflow */
+	
+	font-family: Verdana,sans-serif;
+	font-size: 16px;
+}
+
+div#sshow {
+	position: relative;
+	float: left; /* Wrap text around this */
+	margin-right: 10px;
+	
+	width: 533px;
+	height: 300px;
+	
+	background-color: #004040;
+	background-image: url('./pinball3D_small.jpg');
+	background-repeat: no-repeat;
+	background-size: 100%;
+}
+div#sshowOverlay {
+	width: 100%;
+	height: 100%;
+
+	cursor: hand;
+}
+div#sshowTitle {
+	position: absolute;
+	bottom: 0;
+	margin: auto;
+	padding: 0px 3px;
+	
+	width: 100%;
+	height: 25px;
+	line-height: 25px;
+	
+	background-color: #000000;
+	background: url('./opacity50_black.png');
+}
+div#sshowPrev,
+div#sshowNext {
+	position: absolute;
+	top: 0; bottom: 0;
+	margin: auto;
+	
+	width: 30px;
+	height: 50px;
+	line-height: 50px;
+	
+	border: 1px solid #004040;
+	background-color: #004040;
+	color: #FFFFFF;
+	text-align: center;	
+	cursor: hand;
+}
+div#sshowNext {
+	right: 0;
+}
+div#sshowPrev:hover,
+div#sshowNext:hover {
+	border: 1px solid #FFFFFF;
+}
