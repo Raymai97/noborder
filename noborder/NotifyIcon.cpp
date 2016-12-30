@@ -14,31 +14,17 @@ NotifyIcon::NotifyIcon(UINT const id, std::wstring const & className) :
 	m_hwnd(nullptr),
 	m_hicon(nullptr),
 	m_isVisible(false),
-	m_eventHandler(nullptr)
-{
-	/* Init window to listen for WM_xxx */
-	WNDCLASSEXW wcex = { 0 };
-	wcex.cbSize = sizeof(wcex);
-	wcex.lpszClassName = className.c_str();
-	wcex.lpfnWndProc = WndProc;
-	if (!RegisterClassExW(&wcex)) {
-		THROW(NotifyIcon, RegisterClassExW);
-	}
-	m_hwnd = CreateWindowExW(0,
-		m_className.c_str(), m_className.c_str(),
-		WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr, nullptr,
-		reinterpret_cast<LPVOID>(this));
-	if (!m_hwnd) {
-		THROW(NotifyIcon, CreateWindowExW);
-	}
+	m_eventHandler(nullptr) {
 }
 
 NotifyIcon::~NotifyIcon() {
-	m_isVisible = false;
-	try { this->Update(); }
-	catch (...) {}
-	DestroyWindow(m_hwnd);
-	UnregisterClassW(m_className.c_str(), nullptr);
+	if (m_hwnd) {
+		m_isVisible = false;
+		try { this->Update(); }
+		catch (...) {}
+		DestroyWindow(m_hwnd);
+		UnregisterClassW(m_className.c_str(), nullptr);
+	}
 }
 
 LRESULT NotifyIcon::WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
@@ -64,13 +50,15 @@ LRESULT NotifyIcon::WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 BOOL NotifyIcon::MyShell_NotifyIcon(
 	NOTIFYICONDATA & ni, bool const & forceAdd) const
 {
-	static bool hasAdded = false;
+	// If this assertion failed, you forgot to call Init()
+	assert(m_hwnd != nullptr);
 	ni.cbSize = sizeof(ni);
 	ni.hWnd = m_hwnd;
 	ni.uID = m_id;
 	ni.uCallbackMessage = NI_CALLBACK_MSG;
 	ni.uFlags |= NIF_MESSAGE;
-	/* If visible, modify or add, else delete. */
+	// If visible, modify or add, else delete.
+	static bool hasAdded = false;
 	BOOL ok = Shell_NotifyIconW(
 		m_isVisible ?
 		(hasAdded && !forceAdd ? NIM_MODIFY : NIM_ADD) :
@@ -92,17 +80,41 @@ void NotifyIcon::Update(bool const & forceAdd) const {
 void NotifyIcon::UpdateBalloon(
 	std::wstring const & text,
 	std::wstring const & title,
-	DWORD const & infoFlag,
-	bool const & forceAdd) const
+	DWORD const & infoFlag) const
 {
 	NOTIFYICONDATA ni = { 0 };
 	ni.uFlags = NIF_INFO;
 	_tcscpy_s(ni.szInfo, text.c_str());
 	_tcscpy_s(ni.szInfoTitle, title.c_str());
 	ni.dwInfoFlags = infoFlag;
-	if (!MyShell_NotifyIcon(ni, forceAdd)) {
+	if (!MyShell_NotifyIcon(ni, false)) {
 		THROW(NotifyIcon::UpdateBalloon, MyShell_NotifyIcon);
 	}
+}
+
+NotifyIcon& NotifyIcon::Init() {
+	// Init window to listen for WM_xxx
+	if (!m_hwnd) {
+		WNDCLASSEXW wcex = { 0 };
+		wcex.cbSize = sizeof(wcex);
+		wcex.lpszClassName = m_className.c_str();
+		wcex.lpfnWndProc = WndProc;
+		if (!RegisterClassExW(&wcex)) {
+			THROW(NotifyIcon, RegisterClassExW);
+		}
+		m_hwnd = CreateWindowExW(0,
+			m_className.c_str(), m_className.c_str(),
+			WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr, nullptr,
+			reinterpret_cast<LPVOID>(this));
+		if (!m_hwnd) {
+			THROW(NotifyIcon, CreateWindowExW);
+		}
+	}
+	return *this;
+}
+
+HWND NotifyIcon::GetHwnd() const {
+	return m_hwnd;
 }
 
 bool NotifyIcon::IsVisible() const {	
@@ -135,9 +147,6 @@ NotifyIcon & NotifyIcon::SetTip(std::wstring const & val) {
 	return *this;
 }
 
-HWND NotifyIcon::GetHwnd() const {
-	return m_hwnd;
-}
 
 NotifyIcon & NotifyIcon::SetEventHandler(EventHandler const & val) {
 	m_eventHandler = val;

@@ -105,7 +105,6 @@
     <ClCompile Include="Noborder.cpp" />
     <ClCompile Include="NotifyIcon.cpp" />
     <ClCompile Include="Program.cpp" />
-    <ClCompile Include="Program2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Noborder.h" />

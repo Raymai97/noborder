@@ -24,9 +24,6 @@
     <ClCompile Include="Noborder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Program2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NotifyIcon.h">

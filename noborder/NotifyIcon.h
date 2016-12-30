@@ -3,6 +3,7 @@
 #include <tchar.h>
 #include <string>
 #include <exception>
+#include <assert.h>
 
 class NotifyIcon {
 	typedef void(*EventHandler)(NotifyIcon & self, UINT msg);
@@ -24,15 +25,15 @@ class NotifyIcon {
 	void UpdateBalloon(
 		std::wstring const & text,
 		std::wstring const & title,
-		DWORD const & infoFlag,
-		bool const & forceAdd = false) const;
+		DWORD const & infoFlag) const;
 
 public:
-	
-
 	NotifyIcon(UINT const id, std::wstring const & className);
 	~NotifyIcon();
 	static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+	NotifyIcon& Init();
+	HWND GetHwnd() const;
 
 	bool IsVisible() const;
 	NotifyIcon& SetVisible(bool const &);
@@ -41,9 +42,7 @@ public:
 	NotifyIcon& SetIcon(HICON const &);
 
 	std::wstring const & GetTip() const;
-	NotifyIcon& SetTip(std::wstring const &);
-
-	HWND GetHwnd() const;
+	NotifyIcon& SetTip(std::wstring const &);	
 
 	NotifyIcon& SetEventHandler(EventHandler const &);
 

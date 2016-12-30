@@ -1,36 +1,61 @@
 #include "Program.h"
 
 using Noborder::Target;
-typedef Target::AlwaysOnTopMode AotMode;
+typedef Target::AlwaysOnTopMode		AotMode;
+typedef Noborder::DwmWindow::Error	DwmWndError;
 
 Target target;
-NotifyIcon * nbdNotifyIcon = nullptr;
+NotifyIcon nbdNotifyIcon(NBD_NOTIFYICON, nbdNotifyIconClass);
 
 auto nbdCanUseDwm = true;
 auto nbdAotMode = AotMode::Auto;
 auto nbdExcludeTaskbar = false;
-auto nbdUseDwmFormula = false;
+auto nbdUseDwm = false;
 auto nbdUseAltBack = true;
 auto nbdUseWinBack = false;
 TCHAR nbdCfgFilePath[MAX_PATH] = { 0 };
 
-inline void MsgErr(LPCWSTR szMsg) {
-	MessageBox(nullptr, szMsg, L"noborder Error!",
-		MB_OK | MB_ICONSTOP | MB_TOPMOST);
+inline std::wstring WideFromUtf8(std::string const & utf8) {
+	int cchWide = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
+	LPWSTR szWide = new WCHAR[cchWide];
+	MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, szWide, cchWide);
+	auto wide = std::wstring(szWide);
+	delete[] szWide;
+	return wide;
 }
 
-inline void MsgErrWithSite(LPCWSTR szMsg, LPCSTR szSite) {
-	int cchWideLog = MultiByteToWideChar(CP_UTF8, 0, szSite, -1, nullptr, 0);
-	auto wszLog = new WCHAR[cchWideLog];
-	MultiByteToWideChar(CP_UTF8, 0, szSite, -1, wszLog, cchWideLog);
+inline void MsgErr(LPCWSTR szMsg, LPCWSTR szTitle = L"noborder Error!") {
+	MessageBox(nullptr, szMsg, szTitle, MB_OK | MB_ICONSTOP | MB_TOPMOST);
+}
+
+inline void MsgErr2(LPCWSTR szMsg, LPCSTR szSite) {
 	std::wstringstream ss;
-	ss << szMsg << std::endl << std::endl << szSite;
+	ss << szMsg << std::endl << WideFromUtf8(szSite);
 	MsgErr(ss.str().c_str());
+}
+
+inline void BalloonOrMsg(
+	std::wstring const & msg,
+	std::wstring const & title,
+	NotifyIcon::BalloonIcon const & icon)
+{
+	try {
+		nbdNotifyIcon.ShowBalloon(msg, title, icon);
+	}
+	catch (std::exception const &) {
+		typedef NotifyIcon::BalloonIcon Icon;
+		auto uIcon =
+			icon == Icon::Info ? MB_ICONINFORMATION :
+			icon == Icon::Warning ? MB_ICONWARNING :
+			icon == Icon::Error ? MB_ICONERROR : 0;
+		MessageBox(nullptr, msg.c_str(), title.c_str(), uIcon);
+	}
 }
 
 int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 	// Don't continue if prev instance exists
-	auto mutexHandle = CreateMutexW(nullptr, true, nbdMutexName);
+	// PS: Mutex releases automatically when process terminates
+	CreateMutexW(nullptr, TRUE, nbdMutexName);
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		bool gotIt =
 			nbdPrevInstCall == SendMessageW(
@@ -62,44 +87,43 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 		TCHAR szMyExePath[MAX_PATH] = { 0 };
 		GetModuleFileNameW(GetModuleHandleW(nullptr), szMyExePath, MAX_PATH);
 		auto p = _tcsrchr(szMyExePath, '\\');
-		if (!p) {
+		if (p) {
+			*p = '\0';
+			_stprintf_s(nbdCfgFilePath, L"%s\\%s", szMyExePath, nbdCfgFileName);
+		}
+		else {
 			MsgErr(L"FATAL : Unexpected result from GetModuleFileNameW.");
 			return nbdFatalExitCode;
 		}
-		*p = '\0';
-		_stprintf_s(nbdCfgFilePath, L"%s\\%s", szMyExePath, nbdCfgFileName);
 	}
-
-	// TODO: Load config
 
 	// Install the low-level keyboard hook
 	HHOOK hhk = SetWindowsHookExW(WH_KEYBOARD_LL, LLKeybrdProc, nullptr, 0);
 	if (!hhk) {
 		MsgErr(L"FATAL : Failed to set low-level keyboard hook.");
-		return nbdFatalExitCode;
+		PostQuitMessage(nbdFatalExitCode);
 	}
 
 	// Init Notify Icon
 	try {
-		(*(nbdNotifyIcon = new NotifyIcon(NBD_NOTIFYICON, nbdNotifyIconClass)))
+		nbdNotifyIcon.Init()
 			.SetTip(nbdAppTitle)
 			.SetEventHandler(OnNotifyIconEvent)
 			.SetVisible(true);
 	}
 	catch (std::exception const & ex) {
-		MsgErrWithSite(L"FATAL : Failed to init Notify Icon.", ex.what());
-		return nbdFatalExitCode;
+		MsgErr2(L"FATAL : Failed to init Notify Icon.", ex.what());
+		PostQuitMessage(nbdFatalExitCode);
 	}
 
+	LoadConfig();
 	MSG msg = { 0 };
 	while (GetMessageW(&msg, nullptr, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessageW(&msg);
 	}
-	delete nbdNotifyIcon;
+	SaveConfig();
 	UnhookWindowsHookEx(hhk);
-	// TODO: Save config
-	ReleaseMutex(mutexHandle);
 	return static_cast<int>(msg.wParam);
 }
 
@@ -112,21 +136,74 @@ void ToggleNoborder() {
 			target.Set(hwndCurr,
 				nbdAotMode,
 				nbdExcludeTaskbar,
-				nbdUseDwmFormula
+				nbdUseDwm
 			);
 		}
 	}
+	catch (DwmWndError const & dwmErr) {
+		if (dwmErr == DwmWndError::DwmNotSupported) {
+			BalloonOrMsg(
+				L"DWM is not supported on OS prior to Windows Vista.",
+				L"DWM is not supported!",
+				NotifyIcon::BalloonIcon::Error);
+		}
+		else if (dwmErr == DwmWndError::DwmNotEnabled) {
+			BalloonOrMsg(
+				L"Vista/Win7 users may enable it by using Aero theme.",
+				L"DWM is not enabled!",
+				NotifyIcon::BalloonIcon::Error);
+		}
+		else if (dwmErr == DwmWndError::TargetIsLayeredWindow) {
+			BalloonOrMsg(
+				L"DWM formula doesn't work on Layered window.",
+				L"Unsupported!",
+				NotifyIcon::BalloonIcon::Error);
+		}
+	}
 	catch (std::exception const & ex) {
-		MsgErrWithSite(
-			L"FATAL : Unexpected error at ToggleNoborder().", ex.what());
+		MsgErr2(L"FATAL : Unexpected error at ToggleNoborder().", ex.what());
 		PostQuitMessage(nbdFatalExitCode);
 	}
+}
+
+bool LoadConfig() {
+	auto hfile = CreateFileW(nbdCfgFilePath, GENERIC_READ, 0,
+		nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (hfile) {
+		DWORD read = 0;
+		ReadFile(hfile, &nbdExcludeTaskbar, 1, &read, nullptr);
+		ReadFile(hfile, &nbdAotMode, 1, &read, nullptr);
+		ReadFile(hfile, &nbdUseDwm, 1, &read, nullptr);
+		ReadFile(hfile, &nbdUseAltBack, 1, &read, nullptr);
+		ReadFile(hfile, &nbdUseWinBack, 1, &read, nullptr);
+		// If not using other hotkey, fallback to Alt+Backspace
+		if (!nbdUseWinBack) { nbdUseAltBack = true; }
+		CloseHandle(hfile);
+		return true;
+	}
+	return false;
+}
+
+bool SaveConfig() {
+	auto hfile = CreateFileW(nbdCfgFilePath, GENERIC_WRITE, 0,
+		nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (hfile) {
+		DWORD written = 0;
+		WriteFile(hfile, &nbdExcludeTaskbar, 1, &written, nullptr);
+		WriteFile(hfile, &nbdAotMode, 1, &written, nullptr);
+		WriteFile(hfile, &nbdUseDwm, 1, &written, nullptr);
+		WriteFile(hfile, &nbdUseAltBack, 1, &written, nullptr);
+		WriteFile(hfile, &nbdUseWinBack, 1, &written, nullptr);
+		CloseHandle(hfile);
+		return true;
+	}
+	return false;
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 	if (msg == nbdPrevInstCall) {
 		try {
-			nbdNotifyIcon->ShowBalloon(
+			nbdNotifyIcon.ShowBalloon(
 				L"You can find me here.",
 				L"noborder is already running!",
 				NotifyIcon::BalloonIcon::Info);
@@ -134,9 +211,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 			return nbdPrevInstCall;
 		}
 		catch (std::exception const & ex) {
-			MsgErrWithSite(
-				L"Failed to show 'already running' balloon.",
-				ex.what());
+			MsgErr2(L"Failed to show 'already running' balloon.", ex.what());
 		}
 	}
 	return DefWindowProc(hwnd, msg, w, l);
@@ -181,16 +256,24 @@ void OnNbdPopupMenuItemClick(DWORD id) {
 	else if (id == CMI_ABOUT) {
 		MessageBoxW(nullptr, nbdAppInfo, nbdAppTitle, MB_ICONINFORMATION);
 	}
-	else if (id == CMI_AOT_AUTO) { nbdAotMode = AotMode::Auto; }
-	else if (id == CMI_AOT_ALWAYS) { nbdAotMode = AotMode::Always; }
-	else if (id == CMI_AOT_NEVER) { nbdAotMode = AotMode::Never; }
-	else if (id == CMI_EXCL_TASKBAR) { nbdExcludeTaskbar = !nbdExcludeTaskbar; }
-	else if (id == CMI_USE_DWM) { nbdUseDwmFormula = !nbdUseDwmFormula; }
-	else if (id == CMI_HOTKEY_ALT_BACK) {
-		if (nbdUseWinBack) { nbdUseAltBack = !nbdUseAltBack; }
-	}
-	else if (id == CMI_HOTKEY_WIN_BACK) {
-		if (nbdUseAltBack) { nbdUseWinBack = !nbdUseWinBack; }
+	else {
+		if (id == CMI_EXCL_TASKBAR) { nbdExcludeTaskbar = !nbdExcludeTaskbar; }
+		else if (id == CMI_USE_DWM) { nbdUseDwm = !nbdUseDwm; }
+		else if (id == CMI_AOT_AUTO) { nbdAotMode = AotMode::Auto; }
+		else if (id == CMI_AOT_ALWAYS) { nbdAotMode = AotMode::Always; }
+		else if (id == CMI_AOT_NEVER) { nbdAotMode = AotMode::Never; }
+		else if (id == CMI_HOTKEY_ALT_BACK) {
+			if (nbdUseWinBack) { nbdUseAltBack = !nbdUseAltBack; }
+		}
+		else if (id == CMI_HOTKEY_WIN_BACK) {
+			if (nbdUseAltBack) { nbdUseWinBack = !nbdUseWinBack; }
+		}
+		if (!SaveConfig()) {
+			BalloonOrMsg(
+				std::wstring(L"Failed to write data into ") + nbdCfgFileName,
+				L"Failed to save config!",
+				NotifyIcon::BalloonIcon::Error);
+		}
 	}
 }
 
@@ -207,7 +290,7 @@ HMENU CreateNbdPopupMenu() {
 			id == CMI_EXCL_TASKBAR
 			&& nbdExcludeTaskbar ||
 			id == CMI_USE_DWM
-			&& nbdUseDwmFormula ? MFS_CHECKED :
+			&& nbdUseDwm ? MFS_CHECKED :
 
 			id == CMI_HOTKEY_ALT_BACK
 			&& nbdUseAltBack ||

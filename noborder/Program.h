@@ -1,5 +1,6 @@
 #pragma once
 #include <Windows.h>
+#include <string>
 #include <sstream>
 #include <exception>
 #include "NotifyIcon.h"
@@ -33,6 +34,8 @@ enum MYID {
 };
 
 void ToggleNoborder();
+bool LoadConfig();
+bool SaveConfig();
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK LLKeybrdProc(int, WPARAM, LPARAM);
 void OnNotifyIconEvent(NotifyIcon & self, UINT msg);

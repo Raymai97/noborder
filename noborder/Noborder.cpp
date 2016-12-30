@@ -7,28 +7,32 @@
 
 using namespace Noborder;
 
+// ... Target ... need PosSize, DwmWindow
+
 Target::Target() :
 	m_isUsingDwm(false),
-	m_isNbded(false),
+	m_isSet(false),
 	m_hwnd(nullptr),
 	m_dwExStyle(0),
 	m_dwStyle(0),
-	m_rcWnd({ 0 }) {
+	m_rcWnd({ 0 }),
+	m_dwmWnd(new DwmWindow()) {
 }
 
 Target::~Target() {
-	this->Unset();
+	try { this->Unset(); }
+	catch (...) {}
 }
 
 bool Target::IsNobordered() const {
-	return m_isNbded;
+	return m_isSet;
 }
 
 bool Target::IsUsingDwm() const {
 	return m_isUsingDwm;
 }
 
-HWND Noborder::Target::GetHwnd() const {
+HWND Target::GetHwnd() const {
 	return m_hwnd;
 }
 
@@ -38,44 +42,57 @@ Target & Target::Set(
 	bool const & excludeTaskbar,
 	bool const & useDwm)
 {
-	/* Obtain info for restoring window later */
+	if (m_isSet) { return *this; }
+	// Obtain info for restoring window later
 	m_dwExStyle = GetWndExStyle(hwndTarget);
 	m_dwStyle = GetWndStyle(hwndTarget);
 	m_rcWnd = GetWndRect(hwndTarget);
-	m_hwnd = hwndTarget;
-	m_isNbded = true;
-	/* Determine nobordered PosSize */
+	// Determine nobordered PosSize
 	PosSize psNbd;
 	SIZE cliSize = GetClientSize(hwndTarget);
 	psNbd.cx = cliSize.cx;
 	psNbd.cy = cliSize.cy;
 	RECT rcMax = GetMonitorRect(hwndTarget, excludeTaskbar);
 	psNbd.MaxCenterIn(PosSize(rcMax));
-	/* Make window noborder */
+	// Make window noborder
 	bool topMost =
 		(aotMode == AlwaysOnTopMode::Always) ||
 		(aotMode == AlwaysOnTopMode::Auto && !excludeTaskbar);
-	SetWndExStyle(hwndTarget, m_dwExStyle & ~KEY_EXSTYLE);
-	SetWndStyle(hwndTarget, m_dwStyle & ~KEY_STYLE);
-	SetWndPosSize(hwndTarget, psNbd, topMost);
+	if (useDwm) {
+		m_dwmWnd->Set(hwndTarget, psNbd, topMost);
+		m_isUsingDwm = true;
+	}
+	else {
+		SetWndExStyle(hwndTarget, m_dwExStyle & ~KEY_EXSTYLE);
+		SetWndStyle(hwndTarget, m_dwStyle & ~KEY_STYLE);
+		SetWndPosSize(hwndTarget, psNbd, topMost);
+	}
+	m_hwnd = hwndTarget;
+	m_isSet = true;
 	return *this;
 }
 
 Target & Target::Unset() {
-	if (m_isNbded) {
-		if (IsWindow(m_hwnd)) {
+	if (m_isSet) {
+		if (m_isUsingDwm) {
+			m_dwmWnd->Unset();
+			m_isUsingDwm = false;
+		}
+		else if (IsWindow(m_hwnd)) {
 			bool topMost = (m_dwExStyle & WS_EX_TOPMOST) != 0;
 			SetWndStyle(m_hwnd, m_dwStyle);
 			SetWndExStyle(m_hwnd, m_dwExStyle);
 			SetWndPosSize(m_hwnd, PosSize(m_rcWnd), topMost);
 		}
 		m_hwnd = nullptr;
-		m_isNbded = false;
+		m_isSet = false;
 	}
 	return *this;
 }
 
-RECT Noborder::GetMonitorRect(
+// ... Target ... Static Helper Functions ...
+
+RECT Target::GetMonitorRect(
 	HWND const & hwnd,
 	bool const & doExcludeTaskbar)
 {
@@ -88,7 +105,7 @@ RECT Noborder::GetMonitorRect(
 	return doExcludeTaskbar ? mi.rcWork : mi.rcMonitor;
 }
 
-SIZE Noborder::GetClientSize(HWND const & hwnd) {
+SIZE Target::GetClientSize(HWND const & hwnd) {
 	RECT rc = { 0 };
 	if (!GetClientRect(hwnd, &rc)) {
 		THROW(Noborder::GetClientSize, GetClientRect);
@@ -99,7 +116,7 @@ SIZE Noborder::GetClientSize(HWND const & hwnd) {
 	return size;
 }
 
-DWORD Noborder::GetWndStyle(HWND const & hwnd) {
+DWORD Target::GetWndStyle(HWND const & hwnd) {
 	SetLastError(0);
 	DWORD val = GetWindowLongPtrW(hwnd, GWL_STYLE);
 	if (GetLastError()) {
@@ -108,7 +125,7 @@ DWORD Noborder::GetWndStyle(HWND const & hwnd) {
 	return val;
 }
 
-DWORD Noborder::GetWndExStyle(HWND const & hwnd) {
+DWORD Target::GetWndExStyle(HWND const & hwnd) {
 	SetLastError(0);
 	DWORD val = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
 	if (GetLastError()) {
@@ -117,7 +134,7 @@ DWORD Noborder::GetWndExStyle(HWND const & hwnd) {
 	return val;
 }
 
-void Noborder::SetWndStyle(
+void Target::SetWndStyle(
 	HWND const & hwnd,
 	DWORD const & val)
 {
@@ -128,7 +145,7 @@ void Noborder::SetWndStyle(
 	}
 }
 
-void Noborder::SetWndExStyle(
+void Target::SetWndExStyle(
 	HWND const & hwnd,
 	DWORD const & val)
 {
@@ -139,7 +156,7 @@ void Noborder::SetWndExStyle(
 	}
 }
 
-RECT Noborder::GetWndRect(HWND const & hwnd) {
+RECT Target::GetWndRect(HWND const & hwnd) {
 	RECT rc = { 0 };
 	if (!GetWindowRect(hwnd, &rc)) {
 		THROW(Noborder::GetWndRect, GetWindowRect);
@@ -147,7 +164,7 @@ RECT Noborder::GetWndRect(HWND const & hwnd) {
 	return rc;
 }
 
-void Noborder::SetWndPosSize(
+void Target::SetWndPosSize(
 	HWND const & hwnd,
 	PosSize const & ps,
 	bool const & topMost)
@@ -159,6 +176,8 @@ void Noborder::SetWndPosSize(
 		THROW(Noborder::SetWndPosSize, SetWindowPos);
 	}
 }
+
+// ... PosSize ...
 
 PosSize::PosSize(LONG x, LONG y, LONG cx, LONG cy) :
 	x(x), y(y), cx(cx), cy(cy) {
@@ -195,4 +214,45 @@ void PosSize::MaxCenterIn(PosSize const & psMax) {
 	/* Center 'this' in psMax */
 	this->x = (psMax.cx - this->cx) / 2;
 	this->y = (psMax.cy - this->cy) / 2;
+}
+
+// ... DwmWindow ... need PosSize
+
+DwmWindow::DwmWindow() :
+	m_isSet(false),
+	m_hwnd(nullptr),
+	m_rcWnd({0}) {
+}
+
+DwmWindow::~DwmWindow() {
+	try { this->Unset(); }
+	catch (...) {}
+}
+
+bool DwmWindow::IsSet() const {
+	return m_isSet;
+}
+
+HWND DwmWindow::GetHwnd() const {
+	return m_hwnd;
+}
+
+DwmWindow & DwmWindow::Set(
+	HWND const hwndTarget,
+	PosSize const & ps,
+	bool topMost)
+{
+	if (m_isSet) { return *this; }
+	// TODO: Set DwmWindow
+	throw Error::DwmNotSupported;
+	m_isSet = true;
+	return *this;
+}
+
+DwmWindow & DwmWindow::Unset() {
+	if (m_isSet) {
+		// TODO: Unset DwmWindow
+		m_isSet = false;
+	}
+	return *this;
 }
