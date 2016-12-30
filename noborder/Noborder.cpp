@@ -7,16 +7,15 @@
 
 using namespace Noborder;
 
-// ... Target ... need PosSize, DwmWindow
+// ... Target ... need PosSize, ITargetSetAble
 
 Target::Target() :
-	m_isUsingDwm(false),
 	m_isSet(false),
 	m_hwnd(nullptr),
 	m_dwExStyle(0),
 	m_dwStyle(0),
 	m_rcWnd({ 0 }),
-	m_dwmWnd(new DwmWindow()) {
+	m_setAble(nullptr) {
 }
 
 Target::~Target() {
@@ -25,11 +24,8 @@ Target::~Target() {
 }
 
 bool Target::IsNobordered() const {
+	if (m_setAble) { return m_setAble->IsSet(); }
 	return m_isSet;
-}
-
-bool Target::IsUsingDwm() const {
-	return m_isUsingDwm;
 }
 
 HWND Target::GetHwnd() const {
@@ -40,9 +36,9 @@ Target & Target::Set(
 	HWND const hwndTarget,
 	AlwaysOnTopMode const & aotMode,
 	bool const & excludeTaskbar,
-	bool const & useDwm)
+	ITargetSetAble * setAble)
 {
-	if (m_isSet) { return *this; }
+	if (this->IsNobordered()) { return *this; }
 	// Obtain info for restoring window later
 	m_dwExStyle = GetWndExStyle(hwndTarget);
 	m_dwStyle = GetWndStyle(hwndTarget);
@@ -58,14 +54,14 @@ Target & Target::Set(
 	bool topMost =
 		(aotMode == AlwaysOnTopMode::Always) ||
 		(aotMode == AlwaysOnTopMode::Auto && !excludeTaskbar);
-	if (useDwm) {
-		m_dwmWnd->Set(hwndTarget, psNbd, topMost);
-		m_isUsingDwm = true;
+	if (setAble != nullptr) {
+		setAble->Set(hwndTarget, psNbd, topMost);
+		m_setAble = setAble;
 	}
 	else {
 		SetWndExStyle(hwndTarget, m_dwExStyle & ~KEY_EXSTYLE);
 		SetWndStyle(hwndTarget, m_dwStyle & ~KEY_STYLE);
-		SetWndPosSize(hwndTarget, psNbd, topMost);
+		SetWndPosSize(hwndTarget, psNbd, topMost);	
 	}
 	m_hwnd = hwndTarget;
 	m_isSet = true;
@@ -73,10 +69,10 @@ Target & Target::Set(
 }
 
 Target & Target::Unset() {
-	if (m_isSet) {
-		if (m_isUsingDwm) {
-			m_dwmWnd->Unset();
-			m_isUsingDwm = false;
+	if (this->IsNobordered()) {
+		if (m_setAble != nullptr) {
+			m_setAble->Unset();
+			m_setAble = nullptr;
 		}
 		else if (IsWindow(m_hwnd)) {
 			bool topMost = (m_dwExStyle & WS_EX_TOPMOST) != 0;
@@ -84,102 +80,16 @@ Target & Target::Unset() {
 			SetWndExStyle(m_hwnd, m_dwExStyle);
 			SetWndPosSize(m_hwnd, PosSize(m_rcWnd), topMost);
 		}
-		m_hwnd = nullptr;
-		m_isSet = false;
 	}
+	m_hwnd = nullptr;
+	m_isSet = false;
 	return *this;
-}
-
-// ... Target ... Static Helper Functions ...
-
-RECT Target::GetMonitorRect(
-	HWND const & hwnd,
-	bool const & doExcludeTaskbar)
-{
-	HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-	MONITORINFO mi = { 0 };
-	mi.cbSize = sizeof(mi);
-	if (!GetMonitorInfoW(hmon, &mi)) {
-		THROW(Noborder::GetMonitorRect, GetMonitorInfoW);
-	}
-	return doExcludeTaskbar ? mi.rcWork : mi.rcMonitor;
-}
-
-SIZE Target::GetClientSize(HWND const & hwnd) {
-	RECT rc = { 0 };
-	if (!GetClientRect(hwnd, &rc)) {
-		THROW(Noborder::GetClientSize, GetClientRect);
-	}
-	SIZE size = { 0 };
-	size.cx = rc.right - rc.left;
-	size.cy = rc.bottom - rc.top;
-	return size;
-}
-
-DWORD Target::GetWndStyle(HWND const & hwnd) {
-	SetLastError(0);
-	DWORD val = GetWindowLongPtrW(hwnd, GWL_STYLE);
-	if (GetLastError()) {
-		THROW(Noborder::GetWndStyle, SetWindowLongPtrW);
-	}
-	return val;
-}
-
-DWORD Target::GetWndExStyle(HWND const & hwnd) {
-	SetLastError(0);
-	DWORD val = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
-	if (GetLastError()) {
-		THROW(Noborder::GetWndExStyle, SetWindowLongPtrW);
-	}
-	return val;
-}
-
-void Target::SetWndStyle(
-	HWND const & hwnd,
-	DWORD const & val)
-{
-	SetLastError(0);
-	SetWindowLongPtrW(hwnd, GWL_STYLE, val);
-	if (GetLastError()) {
-		THROW(Noborder::SetWndStyle, SetWindowLongPtrW);
-	}
-}
-
-void Target::SetWndExStyle(
-	HWND const & hwnd,
-	DWORD const & val)
-{
-	SetLastError(0);
-	SetWindowLongPtrW(hwnd, GWL_EXSTYLE, val);
-	if (GetLastError()) {
-		THROW(Noborder::SetWndExStyle, SetWindowLongPtrW);
-	}
-}
-
-RECT Target::GetWndRect(HWND const & hwnd) {
-	RECT rc = { 0 };
-	if (!GetWindowRect(hwnd, &rc)) {
-		THROW(Noborder::GetWndRect, GetWindowRect);
-	}
-	return rc;
-}
-
-void Target::SetWndPosSize(
-	HWND const & hwnd,
-	PosSize const & ps,
-	bool const & topMost)
-{
-	BOOL ok = SetWindowPos(hwnd,
-		topMost ? HWND_TOPMOST : HWND_NOTOPMOST,
-		ps.x, ps.y, ps.cx, ps.cy, SWP_SHOWWINDOW);
-	if (!ok) {
-		THROW(Noborder::SetWndPosSize, SetWindowPos);
-	}
 }
 
 // ... PosSize ...
 
-PosSize::PosSize(LONG x, LONG y, LONG cx, LONG cy) :
+PosSize::PosSize(LONG const x, LONG const y,
+	LONG const cx, LONG const cy) :
 	x(x), y(y), cx(cx), cy(cy) {
 }
 
@@ -189,7 +99,7 @@ PosSize::PosSize(RECT const & rc) :
 	cy(rc.bottom - rc.top) {
 }
 
-RECT PosSize::ToRECT() {
+RECT PosSize::ToRECT() const {
 	RECT rc = { 0 };
 	rc.left = this->x;
 	rc.right = this->x + this->cx;
@@ -216,43 +126,113 @@ void PosSize::MaxCenterIn(PosSize const & psMax) {
 	this->y = (psMax.cy - this->cy) / 2;
 }
 
-// ... DwmWindow ... need PosSize
 
-DwmWindow::DwmWindow() :
-	m_isSet(false),
-	m_hwnd(nullptr),
-	m_rcWnd({0}) {
-}
+// ... Noborder Helper Functions ...
 
-DwmWindow::~DwmWindow() {
-	try { this->Unset(); }
-	catch (...) {}
-}
-
-bool DwmWindow::IsSet() const {
-	return m_isSet;
-}
-
-HWND DwmWindow::GetHwnd() const {
-	return m_hwnd;
-}
-
-DwmWindow & DwmWindow::Set(
-	HWND const hwndTarget,
-	PosSize const & ps,
-	bool topMost)
-{
-	if (m_isSet) { return *this; }
-	// TODO: Set DwmWindow
-	throw Error::DwmNotSupported;
-	m_isSet = true;
-	return *this;
-}
-
-DwmWindow & DwmWindow::Unset() {
-	if (m_isSet) {
-		// TODO: Unset DwmWindow
-		m_isSet = false;
+RECT Noborder::GetMonitorRect(
+	HWND const hwnd,
+	bool const & doExcludeTaskbar) {
+	HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFO mi = { 0 };
+	mi.cbSize = sizeof(mi);
+	if (!GetMonitorInfoW(hmon, &mi)) {
+		THROW(Noborder::GetMonitorRect, GetMonitorInfoW);
 	}
-	return *this;
+	return doExcludeTaskbar ? mi.rcWork : mi.rcMonitor;
 }
+
+SIZE Noborder::GetClientSize(HWND const hwnd) {
+	RECT rc = { 0 };
+	if (!GetClientRect(hwnd, &rc)) {
+		THROW(Noborder::GetClientSize, GetClientRect);
+	}
+	SIZE size = { 0 };
+	size.cx = rc.right - rc.left;
+	size.cy = rc.bottom - rc.top;
+	// Adjust client size if got menu bar
+	MENUBARINFO mbInfo;
+	mbInfo.cbSize = sizeof(mbInfo);
+	if (GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbInfo)) {
+		size.cy += PosSize(mbInfo.rcBar).cy;
+	}
+	return size;
+}
+
+DWORD Noborder::GetWndStyle(HWND const hwnd) {
+	SetLastError(0);
+	auto val = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_STYLE));
+	if (GetLastError()) {
+		THROW(Noborder::GetWndStyle, SetWindowLongPtrW);
+	}
+	return val;
+}
+
+DWORD Noborder::GetWndExStyle(HWND const hwnd) {
+	SetLastError(0);
+	auto val = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
+	if (GetLastError()) {
+		THROW(Noborder::GetWndExStyle, SetWindowLongPtrW);
+	}
+	return val;
+}
+
+void Noborder::SetWndStyle(
+	HWND const hwnd,
+	DWORD const & val)
+{
+	SetLastError(0);
+	SetWindowLongPtrW(hwnd, GWL_STYLE, val);
+	if (GetLastError()) {
+		THROW(Noborder::SetWndStyle, SetWindowLongPtrW);
+	}
+}
+
+void Noborder::SetWndExStyle(
+	HWND const hwnd,
+	DWORD const & val)
+{
+	SetLastError(0);
+	SetWindowLongPtrW(hwnd, GWL_EXSTYLE, val);
+	if (GetLastError()) {
+		THROW(Noborder::SetWndExStyle, SetWindowLongPtrW);
+	}
+}
+
+RECT Noborder::GetWndRect(HWND const hwnd) {
+	RECT rc = { 0 };
+	if (!GetWindowRect(hwnd, &rc)) {
+		THROW(Noborder::GetWndRect, GetWindowRect);
+	}
+	return rc;
+}
+
+void Noborder::SetWndPosSize(
+	HWND const hwnd,
+	PosSize const & ps,
+	bool const & topMost)
+{
+	BOOL ok = SetWindowPos(hwnd,
+		topMost ? HWND_TOPMOST : HWND_NOTOPMOST,
+		ps.x, ps.y, ps.cx, ps.cy, SWP_SHOWWINDOW);
+	if (!ok) {
+		THROW(Noborder::SetWndPosSize, SetWindowPos);
+	}
+}
+
+void Noborder::BringWndToTop(
+	HWND const hwnd,
+	bool const & topMost)
+{
+	// To make sure 'Bring To Top' works 100%, we need to set TopMost first,
+	// and disable it if we don't need it.
+	BOOL ok = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+		SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+	if (ok && !topMost) {
+		ok = SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+			SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+	}
+	if (!ok) {
+		THROW(Noborder::BringWndToTop, SetWindowPos);
+	}
+}
+

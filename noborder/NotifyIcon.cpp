@@ -38,7 +38,9 @@ LRESULT NotifyIcon::WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 		auto self = reinterpret_cast<NotifyIcon*>(ptr);
 		if (msg == NI_CALLBACK_MSG) {
 			/* wparam = id, lparam = wm_xxx */
-			if (self->m_eventHandler) { self->m_eventHandler(*self, l); }
+			if (self->m_eventHandler) {
+				self->m_eventHandler(*self, static_cast<UINT>(l));
+			}
 		}
 		else if (msg == self->m_taskbarCreatedMsg) {
 			self->Update(true);

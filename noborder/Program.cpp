@@ -2,12 +2,13 @@
 
 using Noborder::Target;
 typedef Target::AlwaysOnTopMode		AotMode;
-typedef Noborder::DwmWindow::Error	DwmWndError;
+using DwmFormula::DwmWindow;
+typedef DwmWindow::Error	DwmWndError;
 
 Target target;
+DwmWindow dwmWindow(nbdDwmWindowClass);
 NotifyIcon nbdNotifyIcon(NBD_NOTIFYICON, nbdNotifyIconClass);
 
-auto nbdCanUseDwm = true;
 auto nbdAotMode = AotMode::Auto;
 auto nbdExcludeTaskbar = false;
 auto nbdUseDwm = false;
@@ -51,6 +52,13 @@ inline void BalloonOrMsg(
 		MessageBox(nullptr, msg.c_str(), title.c_str(), uIcon);
 	}
 }
+
+#ifdef _DEBUG
+int main() {
+	puts("--- Noborder Debug ---");
+	return _tWinMain(0, 0, 0, 0);
+}
+#endif
 
 int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 	// Don't continue if prev instance exists
@@ -106,8 +114,15 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 
 	// Init Notify Icon
 	try {
+		auto MyIcon = []() -> HICON {
+			auto himg = LoadImage(GetModuleHandle(nullptr),
+				MAKEINTRESOURCEW(IDI_NOBORDER),
+				IMAGE_ICON, 16, 16, LR_SHARED);
+			return reinterpret_cast<HICON>(himg);
+		};
 		nbdNotifyIcon.Init()
 			.SetTip(nbdAppTitle)
+			.SetIcon(MyIcon())
 			.SetEventHandler(OnNotifyIconEvent)
 			.SetVisible(true);
 	}
@@ -128,17 +143,24 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 }
 
 void ToggleNoborder() {
+	printf("ToggleNoborder(): \n");
 	try {
-		HWND hwndOld = target.GetHwnd();
+		auto shouldSet = true;
 		HWND hwndCurr = GetForegroundWindow();
-		if (target.IsNobordered()) { target.Unset(); }
-		if (hwndCurr != hwndOld) {
+		if (target.IsNobordered()) {
+			HWND hwndOld = target.GetHwnd();
+			target.Unset();
+			if (hwndOld == hwndCurr) {
+				shouldSet = false;
+			}
+		}
+		if (shouldSet) {
 			target.Set(hwndCurr,
 				nbdAotMode,
 				nbdExcludeTaskbar,
-				nbdUseDwm
-			);
+				nbdUseDwm ? &dwmWindow : nullptr);
 		}
+		printf("  shouldSet == %s \n\n", shouldSet ? "true" : "false");
 	}
 	catch (DwmWndError const & dwmErr) {
 		if (dwmErr == DwmWndError::DwmNotSupported) {
@@ -159,6 +181,10 @@ void ToggleNoborder() {
 				L"Unsupported!",
 				NotifyIcon::BalloonIcon::Error);
 		}
+	}
+	catch (DwmFormula::DwmException const & ex) {
+		MsgErr2(L"FATAL : Unexpected error in DwmFormula:",
+			ex.GetCalleeName().c_str());
 	}
 	catch (std::exception const & ex) {
 		MsgErr2(L"FATAL : Unexpected error at ToggleNoborder().", ex.what());
@@ -249,6 +275,26 @@ void OnNotifyIconEvent(NotifyIcon & self, UINT msg) {
 		DestroyMenu(hmenu);
 		OnNbdPopupMenuItemClick(id);
 	}
+	else if (msg == WM_LBUTTONUP) {
+		using namespace std;
+		auto GetWndTitle = [](HWND hwnd) -> wstring {
+			TCHAR szWndTitle[MAX_PATH] = { 0 };
+			GetWindowTextW(hwnd, szWndTitle, MAX_PATH);
+			return wstring(szWndTitle);
+		};		
+		wstringstream ss;
+		if (target.IsNobordered()) {
+			auto hwnd = target.GetHwnd();
+			ss << L"A window has been nobordered." << endl;
+			ss << L"Window title: " << GetWndTitle(hwnd) << endl;
+		}
+		else {
+			ss << "Nothing has been 'nobordered' yet." << endl;
+			ss << "Have a nice day!" << endl;
+		}
+		nbdNotifyIcon.ShowBalloon(ss.str().c_str(), nbdAppTitle,
+			NotifyIcon::BalloonIcon::Info);
+	}
 }
 
 void OnNbdPopupMenuItemClick(DWORD id) {
@@ -309,7 +355,7 @@ HMENU CreateNbdPopupMenu() {
 			reinterpret_cast<UINT_PTR>(hmenuAot), L"Always on Top");
 	}
 	AppendMenuW(hmenu, MifOf(CMI_EXCL_TASKBAR), CMI_EXCL_TASKBAR, L"Exclude Taskbar");
-	if (nbdCanUseDwm) {
+	if (DwmFormula::IsDwmSupported()) {
 		AppendMenuW(hmenu, MifOf(CMI_USE_DWM), CMI_USE_DWM, L"Use DWM formula");
 	}
 	AppendMenuW(hmenu, MFT_SEPARATOR, 0, nullptr);

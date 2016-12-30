@@ -5,6 +5,8 @@
 #include <exception>
 #include "NotifyIcon.h"
 #include "Noborder.h"
+#include "DwmFormula.h"
+#include "resource.h"
 
 auto const nbdAppTitle = L"noborder v1.5";
 auto const nbdAppInfo =
