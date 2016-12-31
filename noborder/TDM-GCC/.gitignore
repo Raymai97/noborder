@@ -1,0 +1,4 @@
+*.o
+*.res
+*.exe
+*.config

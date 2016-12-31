@@ -1,6 +1,6 @@
 #include "Noborder.h"
 #ifndef THROW
-#define THROW(caller, callee)	throw std::exception(\
+#define THROW(caller, callee)	throw std::runtime_error(\
 	"at " #callee "()\n" \
 	"at " #caller "()\n")
 #endif
@@ -162,7 +162,7 @@ DWORD Noborder::GetWndStyle(HWND const hwnd) {
 	SetLastError(0);
 	auto val = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_STYLE));
 	if (GetLastError()) {
-		THROW(Noborder::GetWndStyle, SetWindowLongPtrW);
+		THROW(Noborder::GetWndStyle, GetWindowLongPtrW);
 	}
 	return val;
 }
@@ -171,14 +171,14 @@ DWORD Noborder::GetWndExStyle(HWND const hwnd) {
 	SetLastError(0);
 	auto val = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
 	if (GetLastError()) {
-		THROW(Noborder::GetWndExStyle, SetWindowLongPtrW);
+		THROW(Noborder::GetWndExStyle, GetWindowLongPtrW);
 	}
 	return val;
 }
 
 void Noborder::SetWndStyle(
 	HWND const hwnd,
-	DWORD const & val)
+	DWORD const val)
 {
 	SetLastError(0);
 	SetWindowLongPtrW(hwnd, GWL_STYLE, val);
@@ -189,7 +189,7 @@ void Noborder::SetWndStyle(
 
 void Noborder::SetWndExStyle(
 	HWND const hwnd,
-	DWORD const & val)
+	DWORD const val)
 {
 	SetLastError(0);
 	SetWindowLongPtrW(hwnd, GWL_EXSTYLE, val);
@@ -213,7 +213,7 @@ void Noborder::SetWndPosSize(
 {
 	BOOL ok = SetWindowPos(hwnd,
 		topMost ? HWND_TOPMOST : HWND_NOTOPMOST,
-		ps.x, ps.y, ps.cx, ps.cy, SWP_SHOWWINDOW);
+		ps.x, ps.y, ps.cx, ps.cy, SWP_NOACTIVATE | SWP_SHOWWINDOW);
 	if (!ok) {
 		THROW(Noborder::SetWndPosSize, SetWindowPos);
 	}

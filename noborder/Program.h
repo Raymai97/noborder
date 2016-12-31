@@ -2,15 +2,19 @@
 #include <Windows.h>
 #include <string>
 #include <sstream>
-#include <exception>
+#include <stdexcept>
 #include "NotifyIcon.h"
 #include "Noborder.h"
 #include "DwmFormula.h"
 #include "resource.h"
 
+#ifndef MY_DEVTOOL_INFO
+#define MY_DEVTOOL_INFO		L"with MSVC2015"
+#endif
+
 auto const nbdAppTitle = L"noborder v1.5";
 auto const nbdAppInfo =
-	L"noborder v1.5 . by Raymai97 . in MSVC2015\n\n"
+	L"noborder v1.5 . by Raymai97 . " MY_DEVTOOL_INFO L" \n\n"
 	L"A tool to switch current window into 'Borderless' mode.\n"
 	L"By default, press ALT+BACKSPACE to toggle.";
 auto const nbdMutexName = L"NOBORDER MUTEX";

@@ -1,7 +1,6 @@
 #pragma once
 #include <Windows.h>
-#include <tchar.h>
-#include <exception>
+#include <stdexcept>
 
 namespace Noborder {
 
@@ -18,8 +17,8 @@ namespace Noborder {
 	SIZE GetClientSize(HWND const);
 	DWORD GetWndStyle(HWND const);
 	DWORD GetWndExStyle(HWND const);
-	void SetWndStyle(HWND const, DWORD const &);
-	void SetWndExStyle(HWND const, DWORD const &);
+	void SetWndStyle(HWND const, DWORD const);
+	void SetWndExStyle(HWND const, DWORD const);
 	RECT GetWndRect(HWND const);
 	void SetWndPosSize(HWND const,
 		PosSize const &,

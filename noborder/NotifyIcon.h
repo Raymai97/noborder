@@ -1,8 +1,8 @@
 #pragma once
 #include <Windows.h>
-#include <tchar.h>
+#include <wchar.h>
 #include <string>
-#include <exception>
+#include <stdexcept>
 #include <assert.h>
 
 class NotifyIcon {
@@ -18,7 +18,7 @@ class NotifyIcon {
 	EventHandler	m_eventHandler;
 
 	BOOL MyShell_NotifyIcon(
-		NOTIFYICONDATA &,
+		NOTIFYICONDATAW &,
 		bool const & forceAdd) const;
 	void Update(
 		bool const & forceAdd = false) const;

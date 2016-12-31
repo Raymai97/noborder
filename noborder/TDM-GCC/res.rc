@@ -1,0 +1,25 @@
+101    ICON      "../noborder_icon.ico"
+
+1 VERSIONINFO
+ FILEVERSION 1,5,0,0
+ PRODUCTVERSION 1,5,0,0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040004b0"
+        BEGIN
+            VALUE "CompanyName", "MaiSoft"
+            VALUE "FileDescription", "noborder, the 'Borderless' mode switch"
+            VALUE "FileVersion", "1.5.0.0"
+            VALUE "InternalName", "noborder.exe"
+            VALUE "LegalCopyright", "Copyright (C) MaiSoft 2017"
+            VALUE "OriginalFilename", "noborder.exe"
+            VALUE "ProductName", "noborder"
+            VALUE "ProductVersion", "1.5.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x400, 1200
+    END
+END

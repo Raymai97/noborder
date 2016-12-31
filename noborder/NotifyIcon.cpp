@@ -1,6 +1,6 @@
 #include "NotifyIcon.h"
 #ifndef THROW
-#define THROW(caller, callee)	throw std::exception(\
+#define THROW(caller, callee)	throw std::runtime_error(\
 	"at " #callee "()\n" \
 	"at " #caller "()\n")
 #endif
@@ -50,7 +50,7 @@ LRESULT NotifyIcon::WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 }
 
 BOOL NotifyIcon::MyShell_NotifyIcon(
-	NOTIFYICONDATA & ni, bool const & forceAdd) const
+	NOTIFYICONDATAW & ni, bool const & forceAdd) const
 {
 	// If this assertion failed, you forgot to call Init()
 	assert(m_hwnd != nullptr);
@@ -70,9 +70,9 @@ BOOL NotifyIcon::MyShell_NotifyIcon(
 }
 
 void NotifyIcon::Update(bool const & forceAdd) const {
-	NOTIFYICONDATA ni = { 0 };
+	NOTIFYICONDATAW ni = { 0 };
 	ni.uFlags = NIF_TIP | NIF_ICON;
-	_tcscpy_s(ni.szTip, m_tipText.c_str());
+	wcscpy_s(ni.szTip, m_tipText.c_str());
 	ni.hIcon = m_hicon;
 	if (!MyShell_NotifyIcon(ni, forceAdd)) {
 		THROW(NotifyIcon::Update, MyShell_NotifyIcon);
@@ -84,10 +84,10 @@ void NotifyIcon::UpdateBalloon(
 	std::wstring const & title,
 	DWORD const & infoFlag) const
 {
-	NOTIFYICONDATA ni = { 0 };
+	NOTIFYICONDATAW ni = { 0 };
 	ni.uFlags = NIF_INFO;
-	_tcscpy_s(ni.szInfo, text.c_str());
-	_tcscpy_s(ni.szInfoTitle, title.c_str());
+	wcscpy_s(ni.szInfo, text.c_str());
+	wcscpy_s(ni.szInfoTitle, title.c_str());
 	ni.dwInfoFlags = infoFlag;
 	if (!MyShell_NotifyIcon(ni, false)) {
 		THROW(NotifyIcon::UpdateBalloon, MyShell_NotifyIcon);

@@ -14,7 +14,7 @@ auto nbdExcludeTaskbar = false;
 auto nbdUseDwm = false;
 auto nbdUseAltBack = true;
 auto nbdUseWinBack = false;
-TCHAR nbdCfgFilePath[MAX_PATH] = { 0 };
+wchar_t nbdCfgFilePath[MAX_PATH] = { 0 };
 
 inline std::wstring WideFromUtf8(std::string const & utf8) {
 	int cchWide = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
@@ -26,7 +26,7 @@ inline std::wstring WideFromUtf8(std::string const & utf8) {
 }
 
 inline void MsgErr(LPCWSTR szMsg, LPCWSTR szTitle = L"noborder Error!") {
-	MessageBox(nullptr, szMsg, szTitle, MB_OK | MB_ICONSTOP | MB_TOPMOST);
+	MessageBoxW(nullptr, szMsg, szTitle, MB_OK | MB_ICONSTOP | MB_TOPMOST);
 }
 
 inline void MsgErr2(LPCWSTR szMsg, LPCSTR szSite) {
@@ -43,24 +43,24 @@ inline void BalloonOrMsg(
 	try {
 		nbdNotifyIcon.ShowBalloon(msg, title, icon);
 	}
-	catch (std::exception const &) {
+	catch (std::runtime_error const &) {
 		typedef NotifyIcon::BalloonIcon Icon;
 		auto uIcon =
 			icon == Icon::Info ? MB_ICONINFORMATION :
 			icon == Icon::Warning ? MB_ICONWARNING :
 			icon == Icon::Error ? MB_ICONERROR : 0;
-		MessageBox(nullptr, msg.c_str(), title.c_str(), uIcon);
+		MessageBoxW(nullptr, msg.c_str(), title.c_str(), uIcon);
 	}
 }
 
 #ifdef _DEBUG
 int main() {
 	puts("--- Noborder Debug ---");
-	return _tWinMain(0, 0, 0, 0);
+	return WinMain(GetModuleHandleW(nullptr), 0, 0, 0);
 }
 #endif
 
-int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
+int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int) {
 	// Don't continue if prev instance exists
 	// PS: Mutex releases automatically when process terminates
 	CreateMutexW(nullptr, TRUE, nbdMutexName);
@@ -92,12 +92,12 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 
 	// Determine szCfgFilePath
 	{
-		TCHAR szMyExePath[MAX_PATH] = { 0 };
-		GetModuleFileNameW(GetModuleHandleW(nullptr), szMyExePath, MAX_PATH);
-		auto p = _tcsrchr(szMyExePath, '\\');
+		wchar_t szMyExePath[MAX_PATH] = { 0 };
+		GetModuleFileNameW(hInst, szMyExePath, MAX_PATH);
+		auto p = wcsrchr(szMyExePath, '\\');
 		if (p) {
 			*p = '\0';
-			_stprintf_s(nbdCfgFilePath, L"%s\\%s", szMyExePath, nbdCfgFileName);
+			swprintf_s(nbdCfgFilePath, L"%s\\%s", szMyExePath, nbdCfgFileName);
 		}
 		else {
 			MsgErr(L"FATAL : Unexpected result from GetModuleFileNameW.");
@@ -106,16 +106,16 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 	}
 
 	// Install the low-level keyboard hook
-	HHOOK hhk = SetWindowsHookExW(WH_KEYBOARD_LL, LLKeybrdProc, nullptr, 0);
+	HHOOK hhk = SetWindowsHookExW(WH_KEYBOARD_LL, LLKeybrdProc, hInst, 0);
 	if (!hhk) {
 		MsgErr(L"FATAL : Failed to set low-level keyboard hook.");
-		PostQuitMessage(nbdFatalExitCode);
+		return nbdFatalExitCode;
 	}
 
 	// Init Notify Icon
 	try {
-		auto MyIcon = []() -> HICON {
-			auto himg = LoadImage(GetModuleHandle(nullptr),
+		auto MyIcon = [hInst]() -> HICON {
+			auto himg = LoadImageW(hInst,
 				MAKEINTRESOURCEW(IDI_NOBORDER),
 				IMAGE_ICON, 16, 16, LR_SHARED);
 			return reinterpret_cast<HICON>(himg);
@@ -126,12 +126,13 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 			.SetEventHandler(OnNotifyIconEvent)
 			.SetVisible(true);
 	}
-	catch (std::exception const & ex) {
+	catch (std::runtime_error const & ex) {
 		MsgErr2(L"FATAL : Failed to init Notify Icon.", ex.what());
 		PostQuitMessage(nbdFatalExitCode);
 	}
 
 	LoadConfig();
+	if (!DwmFormula::IsDwmSupported()) { nbdUseDwm = false; }
 	MSG msg = { 0 };
 	while (GetMessageW(&msg, nullptr, 0, 0)) {
 		TranslateMessage(&msg);
@@ -143,7 +144,13 @@ int APIENTRY _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int) {
 }
 
 void ToggleNoborder() {
-	printf("ToggleNoborder(): \n");
+	// Balloon stays for a few secs. If user clicks on Notify Icon,
+	// and toggle noborder soon enough, the balloon with old info
+	// will still be there, which seems awkward, so...
+	try { nbdNotifyIcon.HideBalloon(); }
+	catch (...) {}
+	// If user noborders a window while another window is nobordered,
+	// it will restore the old one and 'noborder' the new one.
 	try {
 		auto shouldSet = true;
 		HWND hwndCurr = GetForegroundWindow();
@@ -159,8 +166,7 @@ void ToggleNoborder() {
 				nbdAotMode,
 				nbdExcludeTaskbar,
 				nbdUseDwm ? &dwmWindow : nullptr);
-		}
-		printf("  shouldSet == %s \n\n", shouldSet ? "true" : "false");
+		}	
 	}
 	catch (DwmWndError const & dwmErr) {
 		if (dwmErr == DwmWndError::DwmNotSupported) {
@@ -183,11 +189,11 @@ void ToggleNoborder() {
 		}
 	}
 	catch (DwmFormula::DwmException const & ex) {
-		MsgErr2(L"FATAL : Unexpected error in DwmFormula:",
-			ex.GetCalleeName().c_str());
+		MsgErr2(L"FATAL : Unexpected DwmExpection in ToggleNoborder().", ex.what());
+		PostQuitMessage(nbdFatalExitCode);
 	}
-	catch (std::exception const & ex) {
-		MsgErr2(L"FATAL : Unexpected error at ToggleNoborder().", ex.what());
+	catch (std::runtime_error const & ex) {
+		MsgErr2(L"FATAL : Unexpected error in ToggleNoborder().", ex.what());
 		PostQuitMessage(nbdFatalExitCode);
 	}
 }
@@ -205,7 +211,7 @@ bool LoadConfig() {
 		// If not using other hotkey, fallback to Alt+Backspace
 		if (!nbdUseWinBack) { nbdUseAltBack = true; }
 		CloseHandle(hfile);
-		return true;
+		return (read > 0);
 	}
 	return false;
 }
@@ -221,7 +227,7 @@ bool SaveConfig() {
 		WriteFile(hfile, &nbdUseAltBack, 1, &written, nullptr);
 		WriteFile(hfile, &nbdUseWinBack, 1, &written, nullptr);
 		CloseHandle(hfile);
-		return true;
+		return (written > 0);
 	}
 	return false;
 }
@@ -236,7 +242,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM w, LPARAM l) {
 			// tell 'new instance' that 'ShowBalloon' is OK
 			return nbdPrevInstCall;
 		}
-		catch (std::exception const & ex) {
+		catch (std::runtime_error const & ex) {
 			MsgErr2(L"Failed to show 'already running' balloon.", ex.what());
 		}
 	}
@@ -278,7 +284,7 @@ void OnNotifyIconEvent(NotifyIcon & self, UINT msg) {
 	else if (msg == WM_LBUTTONUP) {
 		using namespace std;
 		auto GetWndTitle = [](HWND hwnd) -> wstring {
-			TCHAR szWndTitle[MAX_PATH] = { 0 };
+			wchar_t szWndTitle[MAX_PATH] = { 0 };
 			GetWindowTextW(hwnd, szWndTitle, MAX_PATH);
 			return wstring(szWndTitle);
 		};		
@@ -286,11 +292,11 @@ void OnNotifyIconEvent(NotifyIcon & self, UINT msg) {
 		if (target.IsNobordered()) {
 			auto hwnd = target.GetHwnd();
 			ss << L"A window has been nobordered." << endl;
-			ss << L"Window title: " << GetWndTitle(hwnd) << endl;
+			ss << L"Window title: " << GetWndTitle(hwnd);
 		}
 		else {
 			ss << "Nothing has been 'nobordered' yet." << endl;
-			ss << "Have a nice day!" << endl;
+			ss << "Have a nice day!";
 		}
 		nbdNotifyIcon.ShowBalloon(ss.str().c_str(), nbdAppTitle,
 			NotifyIcon::BalloonIcon::Info);
@@ -298,28 +304,29 @@ void OnNotifyIconEvent(NotifyIcon & self, UINT msg) {
 }
 
 void OnNbdPopupMenuItemClick(DWORD id) {
-	if (id == CMI_EXIT) { PostQuitMessage(0); }
-	else if (id == CMI_ABOUT) {
-		MessageBoxW(nullptr, nbdAppInfo, nbdAppTitle, MB_ICONINFORMATION);
+	if (id == CMI_EXCL_TASKBAR) { nbdExcludeTaskbar = !nbdExcludeTaskbar; }
+	else if (id == CMI_USE_DWM) { nbdUseDwm = !nbdUseDwm; }
+	else if (id == CMI_AOT_AUTO) { nbdAotMode = AotMode::Auto; }
+	else if (id == CMI_AOT_ALWAYS) { nbdAotMode = AotMode::Always; }
+	else if (id == CMI_AOT_NEVER) { nbdAotMode = AotMode::Never; }
+	else if (id == CMI_HOTKEY_ALT_BACK) {
+		if (nbdUseWinBack) { nbdUseAltBack = !nbdUseAltBack; }
+	}
+	else if (id == CMI_HOTKEY_WIN_BACK) {
+		if (nbdUseAltBack) { nbdUseWinBack = !nbdUseWinBack; }
 	}
 	else {
-		if (id == CMI_EXCL_TASKBAR) { nbdExcludeTaskbar = !nbdExcludeTaskbar; }
-		else if (id == CMI_USE_DWM) { nbdUseDwm = !nbdUseDwm; }
-		else if (id == CMI_AOT_AUTO) { nbdAotMode = AotMode::Auto; }
-		else if (id == CMI_AOT_ALWAYS) { nbdAotMode = AotMode::Always; }
-		else if (id == CMI_AOT_NEVER) { nbdAotMode = AotMode::Never; }
-		else if (id == CMI_HOTKEY_ALT_BACK) {
-			if (nbdUseWinBack) { nbdUseAltBack = !nbdUseAltBack; }
+		if (id == CMI_ABOUT) {
+			MessageBoxW(nullptr, nbdAppInfo, nbdAppTitle, MB_ICONINFORMATION);
 		}
-		else if (id == CMI_HOTKEY_WIN_BACK) {
-			if (nbdUseAltBack) { nbdUseWinBack = !nbdUseWinBack; }
-		}
-		if (!SaveConfig()) {
-			BalloonOrMsg(
-				std::wstring(L"Failed to write data into ") + nbdCfgFileName,
-				L"Failed to save config!",
-				NotifyIcon::BalloonIcon::Error);
-		}
+		else if (id == CMI_EXIT) { PostQuitMessage(0); }
+		return;
+	}
+	if (!SaveConfig()) {
+		BalloonOrMsg(
+			std::wstring(L"Failed to write data into ") + nbdCfgFileName,
+			L"Failed to save config!",
+			NotifyIcon::BalloonIcon::Error);
 	}
 }
 

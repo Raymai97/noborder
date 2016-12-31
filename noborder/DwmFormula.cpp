@@ -1,6 +1,6 @@
 #include "DwmFormula.h"
 #ifndef THROW
-#define THROW(caller, callee)	throw std::exception(\
+#define THROW(caller, callee)	throw std::runtime_error(\
 	"at " #callee "()\n" \
 	"at " #caller "()\n")
 #endif
@@ -17,11 +17,11 @@ DwmWindow::DwmWindow(std::wstring const & className) :
 	m_topMost(false),
 	m_doCheckTarget(false),
 	m_metTargetChild(false),
-	m_className(className),
 	m_hwnd(nullptr),
 	m_hwndTarget(nullptr),
 	m_dwExStyleTarget(0),
-	m_hthumb(nullptr) {
+	m_hthumb(nullptr),
+	m_className(className) {
 }
 
 DwmWindow::~DwmWindow() {
@@ -70,20 +70,23 @@ DwmWindow & DwmWindow::Set(
 			THROW(DwmWindow::Set, CreateWindowExW);
 		}
 	}
-	// Make dwmWindow looks like nobordered target
+	
+	// Some target will close themselves when lose focus.
+	// So MAKE SURE these code NEVER cause target to LOSE focus.
+
+	// Make target invisible
+	Noborder::SetWndExStyle(hwndTarget, targetExStyle | WS_EX_LAYERED);
+	SetLayeredWindowAttributes(hwndTarget, 0, 0, LWA_ALPHA);
+
+	// Make DwmWindow looks like nobordered target
 	Noborder::SetWndPosSize(m_hwnd, psNbd, topMost);
 	Noborder::BringWndToTop(m_hwnd, topMost);
 
 	// Target may be child of a window, so mimic this behavior as well
 	SetWindowLongPtr(m_hwnd, GWLP_HWNDPARENT,
 		reinterpret_cast<LONG_PTR>(GetParent(m_hwndTarget)));
-	
-	// Make target invisible...
-	Noborder::SetWndExStyle(hwndTarget, targetExStyle | WS_EX_LAYERED);
-	SetLayeredWindowAttributes(hwndTarget, 0, 0, LWA_ALPHA);
-	SetForegroundWindow(hwndTarget); // but activated
 
-	// DWM Magic!
+	// Make DWM draw target's client area into DwmWindow
 	dwm.RegisterThumbnail(m_hwnd, hwndTarget, &m_hthumb);
 	SIZE srcSize = Noborder::GetClientSize(hwndTarget);
 	SIZE destSize = { psNbd.cx, psNbd.cy };
@@ -101,10 +104,10 @@ DwmWindow & DwmWindow::Unset() {
 		// Stop CheckTargetProc
 		m_doCheckTarget = false;
 
-		// Hide dwmWindow (don't destroy!)
+		// Hide DwmWindow (don't destroy!)
 		ShowWindow(m_hwnd, SW_HIDE);
 
-		// Stop DWM magic (fail doesn't matter)
+		// Tell DWM to stop (fail doesn't matter)
 		try { dwm.UnregisterThumbnail(m_hthumb); }
 		catch (...) {}
 		m_hthumb = nullptr;
@@ -156,7 +159,6 @@ LRESULT CALLBACK DwmWindow::WndProc(
 }
 
 DWORD DwmWindow::CheckTargetProc(LPVOID ptr) {
-	printf("CheckTargetProc started... \n");
 	auto self = reinterpret_cast<DwmWindow*>(ptr);
 	HWND hwndCurr = nullptr;
 	HWND hwndPrev = nullptr;
@@ -169,7 +171,6 @@ DWORD DwmWindow::CheckTargetProc(LPVOID ptr) {
 		}
 		// Else if activated window changed
 		else if ((hwndCurr = GetForegroundWindow()) != hwndPrev) {
-			printf("  activated window changed \n");
 			// If target minimized, DwmWindow.hide(), else .show()
 			// without affecting 'activate state'
 			ShowWindow(self->m_hwnd,
@@ -181,8 +182,6 @@ DWORD DwmWindow::CheckTargetProc(LPVOID ptr) {
 				hwndCurr == self->m_hwndTarget;
 			if (weAreActivated && !weWereActivated) {
 				weWereActivated = true;
-				printf("  weAreActivated && !weWereActivated so \n");
-				printf("  BringWndToTop(self->m_hwnd... \n");
 				Noborder::BringWndToTop(self->m_hwnd, self->m_topMost);
 			}
 			else if (weWereActivated && !weAreActivated) {
@@ -196,7 +195,6 @@ DWORD DwmWindow::CheckTargetProc(LPVOID ptr) {
 		}
 		Sleep(100);
 	}
-	printf("... CheckTargetProc \n");
 	return 0;
 }
 
@@ -236,11 +234,11 @@ bool DwmWrapper::IsEnabled() const {
 void DwmWrapper::RegisterThumbnail(
 	HWND const hwndDest,
 	HWND const hwndSrc,
-	PHTHUMBNAIL const phThumb) const
+	DWM::PHTHUMBNAIL const phThumb) const
 {
 	if (!m_fnRT) { return; }
 	typedef HRESULT(__stdcall *fnRT_t)(
-		HWND hwndDest, HWND hwndSrc, PHTHUMBNAIL phThumb);
+		HWND hwndDest, HWND hwndSrc, DWM::PHTHUMBNAIL phThumb);
 	auto DwmRegisterThumbnail = reinterpret_cast<fnRT_t>(m_fnRT);
 	auto hr = DwmRegisterThumbnail(hwndDest, hwndSrc, phThumb);
 	if (FAILED(hr)) {
@@ -249,10 +247,10 @@ void DwmWrapper::RegisterThumbnail(
 }
 
 void DwmWrapper::UnregisterThumbnail(
-	HTHUMBNAIL const hThumb) const
+	DWM::HTHUMBNAIL const hThumb) const
 {
 	if (!m_fnUT) { return; }
-	typedef HRESULT(__stdcall *fnUT_t)(HTHUMBNAIL hThumb);
+	typedef HRESULT(__stdcall *fnUT_t)(DWM::HTHUMBNAIL hThumb);
 	auto DwmUnregisterThumbnail = reinterpret_cast<fnUT_t>(m_fnUT);
 	auto hr = DwmUnregisterThumbnail(hThumb);
 	if (FAILED(hr)) {
@@ -261,13 +259,13 @@ void DwmWrapper::UnregisterThumbnail(
 }
 
 void DwmWrapper::UpdateThumbnail(
-	HTHUMBNAIL const hThumb,
-	DWM_THUMBNAIL_PROPERTIES const *pThumbProp) const
+	DWM::HTHUMBNAIL const hThumb,
+	DWM::THUMBNAIL_PROPERTIES const *pThumbProp) const
 {
 	if (!m_fnUTP) { return; }
 	typedef HRESULT(__stdcall *fnUTP_t)(
-		HTHUMBNAIL hThumb,
-		const DWM_THUMBNAIL_PROPERTIES* ptnProperties);
+		DWM::HTHUMBNAIL hThumb,
+		const DWM::THUMBNAIL_PROPERTIES* ptnProperties);
 	auto DwmUpdateThumbnailProperties =
 		reinterpret_cast<fnUTP_t>(m_fnUTP);
 	auto hr = DwmUpdateThumbnailProperties(hThumb, pThumbProp);
@@ -277,13 +275,13 @@ void DwmWrapper::UpdateThumbnail(
 }
 
 void DwmWrapper::UpdateThumbnail(
-	HTHUMBNAIL const hThumb,
+	DWM::HTHUMBNAIL const hThumb,
 	SIZE const & srcSize,
 	SIZE const & destSize) const
 {
-	DWM_THUMBNAIL_PROPERTIES p = { 0 };
-	p.dwFlags = DWM_TNP::Visible | DWM_TNP::SourceClientAreaOnly |
-		DWM_TNP::RectDestination | DWM_TNP::RectSource;
+	DWM::THUMBNAIL_PROPERTIES p = { 0 };
+	p.dwFlags = DWM::TNP::Visible | DWM::TNP::SourceClientAreaOnly |
+		DWM::TNP::RectDestination | DWM::TNP::RectSource;
 	p.fSourceClientAreaOnly = true; // if false, DWM scale ugly!
 	p.fVisible = true;
 	// NOTE: Set rcSource explicitly to avoid weird problem
@@ -297,7 +295,23 @@ void DwmWrapper::UpdateThumbnail(
 DwmException::DwmException(
 	HRESULT const hr,
 	std::string const & callee) :
-	m_hr(hr), m_callee(callee) {
+	m_hr(hr), m_callee(callee),
+	std::runtime_error("DwmFormula::DwmException")
+{
+	using namespace std;
+	LPSTR szError = nullptr;
+	FormatMessageA(
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, hr,
+		MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
+		reinterpret_cast<LPSTR>(&szError), 0, nullptr);
+	stringstream ss;
+	ss << "DwmException at " << m_callee << endl;
+	ss << szError << endl;
+	ss << "(HRESULT: 0x" << hex << uppercase << m_hr << ")";
+	m_humanErrorMsg = ss.str();
+	LocalFree(szError);
 }
 
 HRESULT DwmException::GetHr() const {
@@ -308,6 +322,13 @@ std::string const & DwmException::GetCalleeName() const {
 	return m_callee;
 }
 
+char const * DwmFormula::DwmException::what() const noexcept {
+	return m_humanErrorMsg.c_str();
+}
+
+// One instance of DwmWrapper is enough.
+// This function allows outsider to check DWM status without
+// creating another DwmWrapper instance.
 bool DwmFormula::IsDwmSupported() {
 	return dwm.IsSupported();
 }
