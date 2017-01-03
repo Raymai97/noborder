@@ -159,7 +159,7 @@ LRESULT CALLBACK DwmWindow::WndProc(
 }
 
 DWORD DwmWindow::CheckTargetProc(LPVOID ptr) {
-	auto self = reinterpret_cast<DwmWindow*>(ptr);
+	auto self = static_cast<DwmWindow*>(ptr);
 	HWND hwndCurr = nullptr;
 	HWND hwndPrev = nullptr;
 	// 'we' = DwmWindow and target

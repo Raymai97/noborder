@@ -107,7 +107,7 @@ NotifyIcon& NotifyIcon::Init() {
 		m_hwnd = CreateWindowExW(0,
 			m_className.c_str(), m_className.c_str(),
 			WS_OVERLAPPED, 0, 0, 0, 0, nullptr, nullptr, nullptr,
-			reinterpret_cast<LPVOID>(this));
+			static_cast<LPVOID>(this));
 		if (!m_hwnd) {
 			THROW(NotifyIcon, CreateWindowExW);
 		}

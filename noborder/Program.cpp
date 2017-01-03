@@ -118,7 +118,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int) {
 			auto himg = LoadImageW(hInst,
 				MAKEINTRESOURCEW(IDI_NOBORDER),
 				IMAGE_ICON, 16, 16, LR_SHARED);
-			return reinterpret_cast<HICON>(himg);
+			return static_cast<HICON>(himg);
 		};
 		nbdNotifyIcon.Init()
 			.SetTip(nbdAppTitle)
