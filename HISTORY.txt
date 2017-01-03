@@ -1,3 +1,9 @@
+v1.4 (3 Jan 2016)
+* OTHER: Rewritten the codebase in favor of modern C++
+* OTHER: 'noborder tiny' (MSVC6.0 build) is discontinued
+* ADDED: 64-bit MSVC2015 build and TDM-GCC build
+* ADDED: Option to use 'Win+Backspace' as hotkey
+
 v1.3.1 (2 May 2016)
 * FIXED: v1.3 wouldn't restore 'Always on Top' when 'DWM formula' was disabled
 * OTHER: Always save config after changing options, and prompt if failed to save
