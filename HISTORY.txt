@@ -1,6 +1,6 @@
 v1.4 (3 Jan 2016)
 * OTHER: Rewritten the codebase in favor of modern C++
-* OTHER: 'noborder tiny' (MSVC6.0 build) is discontinued
+* OTHER: Discontinued 'noborder tiny' (MSVC6.0 build)
 * ADDED: 64-bit MSVC2015 build and TDM-GCC build
 * ADDED: Option to use 'Win+Backspace' as hotkey
 
