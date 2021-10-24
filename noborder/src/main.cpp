@@ -11,10 +11,10 @@ bool useDWM;
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
 
-int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPTSTR lpCmdLine,
-	_In_ int nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPTSTR lpCmdLine,
+	int nCmdShow)
 {
 	HANDLE hMutex = 0;
 	// Init
@@ -33,6 +33,11 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		// If prev instance is old ver / Explorer not running...
 		if (!gotIt) { MSGERR("noborder is already running!"); }
 		return 0;
+	}
+	if (!hMutex)
+	{
+		MSGERR("CreateMutex failed.");
+		return 99;
 	}
 
 	// Create message-only window
@@ -70,7 +75,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
-	canUseDWM = LoadLibrary(TEXT("dwmapi")) != 0;
+	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
+	canUseDWM = x_compat_dwmapi_hMod != 0;
 	CoreInit();
 
 	MSG msg;
@@ -184,12 +190,22 @@ bool LoadConfig()
 		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
+		BYTE buf[8] = { 0 };
 		DWORD read;
-		ReadFile(hFile, &excludeTaskbar, 1, &read, nullptr);
-		ReadFile(hFile, &alwaysOnTopMode, 1, &read, nullptr);
-		ReadFile(hFile, &useDWM, 1, &read, nullptr);
+		bool ok = ReadFile(hFile, buf, sizeof(buf), &read, nullptr) && (read > 3);
+		if (ok)
+		{
+			excludeTaskbar = buf[0] != 0;
+			switch (buf[1])
+			{
+			case AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
+			case AOT_NEVER: alwaysOnTopMode = AOT_NEVER; break;
+			default: alwaysOnTopMode = AOT_AUTO; break;
+			}
+			useDWM = buf[2] != 0;
+		}
 		CloseHandle(hFile);
-		return (read > 0);
+		return ok;
 	}
 	return false;
 }

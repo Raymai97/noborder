@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <shellapi.h>
 #include <tchar.h>
-#include <dwmapi.h>
+#include "compat_dwmapi.h"
 #include "NotifyIcon.h"
 #include "resource.h"
 

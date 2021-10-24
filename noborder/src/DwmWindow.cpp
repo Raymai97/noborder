@@ -40,7 +40,7 @@ DwmWindow::~DwmWindow()
 void DwmWindow::Start(Target *pTarget, bool isTopMost)
 {
 	BOOL dwmIsOK;
-	DwmIsCompositionEnabled(&dwmIsOK);
+	Compat_DwmIsCompositionEnabled(&dwmIsOK);
 	if (!dwmIsOK)
 	{
 		notifyIcon->ShowBalloon(
@@ -71,7 +71,7 @@ void DwmWindow::Start(Target *pTarget, bool isTopMost)
 	SetLayeredWindowAttributes(this->target->hWnd, 0, 0, LWA_ALPHA);
 	SetForegroundWindow(this->target->hWnd); // but activated
 	// DWM Magic!
-	DwmRegisterThumbnail(this->hWnd, this->target->hWnd, &(this->hThumb));
+	Compat_DwmRegisterThumbnail(this->hWnd, this->target->hWnd, &(this->hThumb));
 	UpdateThumb();
 	// Start CheckTargetProc
 	this->ing = true;
@@ -88,7 +88,7 @@ void DwmWindow::Stop()
 	if (this->target)
 	{
 		// Stop DWM Magic
-		DwmUnregisterThumbnail(this->hThumb);
+		Compat_DwmUnregisterThumbnail(this->hThumb);
 		// Restore target
 		SetWindowLong(this->target->hWnd, GWL_EXSTYLE, this->target->exStyle);
 		if (this->dontFocus == false)
@@ -109,9 +109,9 @@ void DwmWindow::UpdateThumb()
 	props.dwFlags = DWM_TNP_VISIBLE | DWM_TNP_SOURCECLIENTAREAONLY | DWM_TNP_RECTDESTINATION | DWM_TNP_RECTSOURCE;
 	props.fSourceClientAreaOnly = true; // if false, DWM scale ugly!
 	props.fVisible = true;
-	props.rcSource = { 0, 0, psSrc.Width, psSrc.Height };
-	props.rcDestination = { 0, 0, psDest.Width, psDest.Height };
-	DwmUpdateThumbnailProperties(this->hThumb, &props);
+	SetRect(&props.rcSource, 0, 0, psSrc.Width, psSrc.Height);
+	SetRect(&props.rcDestination, 0, 0, psDest.Width, psDest.Height);
+	Compat_DwmUpdateThumbnailProperties(this->hThumb, &props);
 }
 
 DWORD WINAPI DwmWindow::CheckTargetProc(LPVOID param)
