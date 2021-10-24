@@ -134,6 +134,9 @@ PosSize NoborderPosSize(HWND hWnd, const PosSize psClient)
 
 BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData)
 {
+	UNREFERENCED_PARAMETER(hdc);
+	UNREFERENCED_PARAMETER(lprc);
+	UNREFERENCED_PARAMETER(dwData);
 	if (h == hMonitor)
 	{
 		MONITORINFO info;

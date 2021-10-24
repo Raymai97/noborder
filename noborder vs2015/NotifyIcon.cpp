@@ -57,21 +57,22 @@ bool NotifyIcon::HwndInitFailed()
 	return (this->hWnd == nullptr);
 }
 
-BOOL NotifyIcon::SetTip(LPCTSTR szTip)
+BOOL NotifyIcon::SetTip(LPCTSTR lpszTip)
 {
-	lstrcpyn(this->szTip, szTip, LEN_TIP);
+	(void)lstrcpyn(this->szTip, lpszTip, LEN_TIP);
 	return Update(this->visible);
 }
 
-BOOL NotifyIcon::SetIcon(HICON hIcon)
+BOOL NotifyIcon::SetIcon(HICON hIco)
 {
-	this->hIcon = hIcon;
+	this->hIcon = hIco;
 	return Update(this->visible);
 }
 
-BOOL NotifyIcon::SetVisible(bool visible)
+BOOL NotifyIcon::SetVisible(bool newVal)
 {
-	return this->Update(this->visible = visible);
+	this->visible = newVal;
+	return this->Update(this->visible);
 }
 
 BOOL NotifyIcon::HideBalloon()
@@ -118,7 +119,7 @@ BOOL NotifyIcon::ShowBalloon()
 
 BOOL NotifyIcon::Update(bool showInTray)
 {
-	BOOL ok;
+	BOOL ok = FALSE;
 	NOTIFYICONDATA d;
 	ZeroMemory(&d, sizeof(d));
 	d.cbSize = sizeof(d);

@@ -1,6 +1,8 @@
 #include "noborder.h"
 
-DwmWindow::DwmWindow()
+DwmWindow::DwmWindow() :
+	hWnd(0), hThumb(0), target(0),
+	ing(false), topMost(false), dontFocus(false)
 {
 	WNDCLASSEX wcex;
 	ZeroMemory(&wcex, sizeof(wcex));
@@ -35,7 +37,7 @@ DwmWindow::~DwmWindow()
 	UnregisterClass(NBD_DUMMY_DWMWINDOW, hInst);
 }
 
-void DwmWindow::Start(Target *target, bool topMost)
+void DwmWindow::Start(Target *pTarget, bool isTopMost)
 {
 	BOOL dwmIsOK;
 	DwmIsCompositionEnabled(&dwmIsOK);
@@ -45,20 +47,20 @@ void DwmWindow::Start(Target *target, bool topMost)
 			_T("Vista/Win7 users may enable it by using Aero theme."),
 			_T("DWM is not enabled!"),
 			NIIF_ERROR);
-		target->nobordered = false;
+		pTarget->nobordered = false;
 		return;
 	}
-	if (HASFLAG(target->exStyle, WS_EX_LAYERED))
+	if (HASFLAG(pTarget->exStyle, WS_EX_LAYERED))
 	{
 		notifyIcon->ShowBalloon(
 			_T("DWM formula doesn't work on Layered window."),
 			_T("Unsupported!"),
 			NIIF_ERROR);
-		target->nobordered = false;
+		pTarget->nobordered = false;
 		return;
 	}
-	this->target = target;
-	this->topMost = topMost;
+	this->target = pTarget;
+	this->topMost = isTopMost;
 	this->dontFocus = false;
 	// Make dwmWindow looks like nobordered target...
 	PosSize ps = this->target->psNbd;
@@ -150,7 +152,7 @@ DWORD WINAPI DwmWindow::CheckTargetProc(LPVOID param)
 LRESULT CALLBACK DwmWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	DwmWindow *me = nullptr;
-	LONG winlong = GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	LONG_PTR winlong = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	if (winlong) { me = (DwmWindow*)winlong; }
 	if (msg == WM_NCCREATE)
 	{

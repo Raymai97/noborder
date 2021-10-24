@@ -27,9 +27,9 @@ typedef enum
 	AOT_NEVER
 } AOT;
 
-static const TCHAR *NBD_APP_TITLE = _T("noborder v1.3.1");
+static const TCHAR *NBD_APP_TITLE = _T("noborder v1.6.0");
 static const TCHAR *NBD_APP_DESC =
-	_T("Version 1.3.1 . by Raymai97 . in VS2015\n\n")
+	_T("Version 1.6.0 . by Raymai97 . in VS2019\n\n")
 	_T("A tool to switch current window into 'Borderless' mode.\n")
 	_T("Press ALT+BACKSPACE to toggle.");
 static const TCHAR *NBD_MUTEX_NAME = _T("NOBORDER MUTEX");

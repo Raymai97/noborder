@@ -18,15 +18,14 @@ AOT alwaysOnTopMode;
 bool useDWM;
 
 // Only this cpp
-HANDLE hMutex;
-HWND hWnd;
-TCHAR cfgFilePath[MAX_PATH];
+static TCHAR cfgFilePath[MAX_PATH];
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPTSTR lpCmdLine,
 	_In_ int nCmdShow)
 {
+	HANDLE hMutex = 0;
 	// Init
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
@@ -80,10 +79,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
-	DWORD osver = GetVersion();
-	BYTE major = LOBYTE(LOWORD(osver));
-	BYTE minor = HIBYTE(LOWORD(osver));
-	canUseDWM = (major >= 6);
+	canUseDWM = LoadLibrary(TEXT("dwmapi")) != 0;
 	CoreInit();
 
 	MSG msg;
@@ -134,21 +130,22 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 void MenuCreatingProc(UINT niId, HMENU hMenu)
 {
-	InsertMenu(hMenu, -1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
-	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, nullptr);
+	UNREFERENCED_PARAMETER(niId);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
+	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	HMENU hAOTMenu = CreatePopupMenu();
 	if (hAOTMenu)
 	{
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
+		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
 	}
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
-	if (canUseDWM) { InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
-	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, nullptr);
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
+	if (canUseDWM) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
+	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
 
 	if (excludeTaskbar) { CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED); }
 	switch (alwaysOnTopMode)
@@ -168,6 +165,7 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 
 void MenuItemSelectedProc(WORD id, WORD event)
 {
+	UNREFERENCED_PARAMETER(event);
 	if (id == SWM_ABOUT)
 	{
 		MessageBox(nullptr, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
