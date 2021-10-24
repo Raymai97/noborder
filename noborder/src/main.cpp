@@ -1,12 +1,3 @@
-/* noborder, the 'Borderless' mode switch, by Raymai97
-
-Version 1.3.1 (2 May 2016) - bug fix
-
-* FIXED: v1.3 wouldn't restore 'Always on Top' when 'DWM formula' was disabled
-* OTHER: Always save config after changing options, and prompt if failed to save
-
-*/
-
 #include "noborder.h"
 
 // For all cpp
@@ -18,28 +9,26 @@ AOT alwaysOnTopMode;
 bool useDWM;
 
 // Only this cpp
-HANDLE hMutex;
-HWND hWnd;
-TCHAR cfgFilePath[MAX_PATH];
+static TCHAR cfgFilePath[MAX_PATH];
 
-int APIENTRY _tWinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPTSTR lpCmdLine,
-	int nCmdShow)
+int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPTSTR lpCmdLine,
+	_In_ int nCmdShow)
 {
+	HANDLE hMutex = 0;
 	// Init
-	if (!InitWinAPIX())
-	{
-		MSGERR("FATAL: InitWinAPIX failed!");
-	}
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
+	UNREFERENCED_PARAMETER(nCmdShow);
 	hInst = hInstance;
 	
 	// Don't continue if noborder is already running
-	hMutex = CreateMutex(NULL, true, NBD_MUTEX_NAME);
+	hMutex = CreateMutex(nullptr, true, NBD_MUTEX_NAME);
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		bool gotIt = false;
-		HWND hWnd = FindWindowEx(HWND_MESSAGE, NULL, NBD_DUMMY_MSG, NBD_DUMMY_MSG);
+		HWND hWnd = FindWindowEx(HWND_MESSAGE, nullptr, NBD_DUMMY_MSG, NBD_DUMMY_MSG);
 		if (hWnd) { gotIt = (SendMessage(hWnd, PREVINST_CALL, 0, 0) == PREVINST_CALL); }
 		// If prev instance is old ver / Explorer not running...
 		if (!gotIt) { MSGERR("noborder is already running!"); }
@@ -68,11 +57,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	notifyIcon->OnMenuCreating = MenuCreatingProc;
 
 	// Install the low-level keyboard hooks
-	HHOOK hhk = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(NULL), 0);
+	HHOOK hhk = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(nullptr), 0);
 	if (!hhk) { MSGERR("FATAL: SetWindowsHookEx WH_KEYBOARD_LL failed!"); return 1; }
 
 	// Find out cfgFilePath and load it
-	GetModuleFileName(GetModuleHandle(NULL), cfgFilePath, MAX_PATH);
+	GetModuleFileName(GetModuleHandle(nullptr), cfgFilePath, MAX_PATH);
 	for (size_t i = _tcslen(cfgFilePath); i--> 0;)
 	{
 		if (cfgFilePath[i] == '\\') { cfgFilePath[i + 1] = '\0'; break; }
@@ -81,19 +70,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
-	DWORD osver = GetVersion();
-	BYTE major = LOBYTE(LOWORD(osver));
-	BYTE minor = HIBYTE(LOWORD(osver));
-	canUseDWM = (major >= 6);
-	if (canUseDWM && !InitDwmAPI())
-	{
-		MSGERR("FATAL: InitDwmAPI failed!");
-		PostQuitMessage(1);
-	}
+	canUseDWM = LoadLibrary(TEXT("dwmapi")) != 0;
 	CoreInit();
 
 	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
+	while (GetMessage(&msg, nullptr, 0, 0))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -134,27 +115,28 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-	return (fEatKeystroke ? TRUE : CallNextHookEx(NULL, nCode, wParam, lParam));
+	return (fEatKeystroke ? TRUE : CallNextHookEx(nullptr, nCode, wParam, lParam));
 }
 
 
 void MenuCreatingProc(UINT niId, HMENU hMenu)
 {
-	InsertMenu(hMenu, -1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
-	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
+	UNREFERENCED_PARAMETER(niId);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
+	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	HMENU hAOTMenu = CreatePopupMenu();
 	if (hAOTMenu)
 	{
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
-		InsertMenu(hAOTMenu, -1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
+		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
 	}
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
-	if (canUseDWM) { InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
-	InsertMenu(hMenu, -1, MF_SEPARATOR, 0, NULL);
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
-	InsertMenu(hMenu, -1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
+	if (canUseDWM) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
+	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
 
 	if (excludeTaskbar) { CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED); }
 	switch (alwaysOnTopMode)
@@ -174,9 +156,10 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 
 void MenuItemSelectedProc(WORD id, WORD event)
 {
+	UNREFERENCED_PARAMETER(event);
 	if (id == SWM_ABOUT)
 	{
-		MessageBox(NULL, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+		MessageBox(nullptr, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
 	}
 	else if (id == SWM_EXIT) { PostQuitMessage(0); }
 	else
@@ -197,14 +180,14 @@ void MenuItemSelectedProc(WORD id, WORD event)
 
 bool LoadConfig()
 {
-	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_READ, 0, NULL, OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_READ, 0, nullptr, OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
 		DWORD read;
-		ReadFile(hFile, &excludeTaskbar, 1, &read, NULL);
-		ReadFile(hFile, &alwaysOnTopMode, 1, &read, NULL);
-		ReadFile(hFile, &useDWM, 1, &read, NULL);
+		ReadFile(hFile, &excludeTaskbar, 1, &read, nullptr);
+		ReadFile(hFile, &alwaysOnTopMode, 1, &read, nullptr);
+		ReadFile(hFile, &useDWM, 1, &read, nullptr);
 		CloseHandle(hFile);
 		return (read > 0);
 	}
@@ -213,14 +196,14 @@ bool LoadConfig()
 
 bool SaveConfig()
 {
-	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-		FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(cfgFilePath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
 		DWORD written;
-		WriteFile(hFile, &excludeTaskbar, 1, &written, NULL);
-		WriteFile(hFile, &alwaysOnTopMode, 1, &written, NULL);
-		WriteFile(hFile, &useDWM, 1, &written, NULL);
+		WriteFile(hFile, &excludeTaskbar, 1, &written, nullptr);
+		WriteFile(hFile, &alwaysOnTopMode, 1, &written, nullptr);
+		WriteFile(hFile, &useDWM, 1, &written, nullptr);
 		CloseHandle(hFile);
 		return (written > 0);
 	}

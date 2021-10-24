@@ -162,21 +162,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Core.cpp" />
-    <ClCompile Include="DwmWindow.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="NotifyIcon.cpp" />
+    <ClCompile Include="src\Core.cpp" />
+    <ClCompile Include="src\DwmWindow.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\NotifyIcon.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="noborder.h" />
-    <ClInclude Include="NotifyIcon.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\noborder.h" />
+    <ClInclude Include="src\NotifyIcon.h" />
+    <ClInclude Include="src\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="noborder.rc" />
+    <ResourceCompile Include="src\noborder.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="noborder_icon.ico" />
+    <Image Include="src\noborder_icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
