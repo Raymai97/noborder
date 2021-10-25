@@ -21,3 +21,9 @@ out_*/
 *.cachefile
 *.VC.db
 *.VC.VC.opendb
+
+# Visual Studio 6 build log
+*.plg
+
+# Visual Studio 6 workspace options file
+*.opt
