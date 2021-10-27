@@ -19,6 +19,8 @@
 #define SWM_AOT_ALWAYS	WM_APP + 5
 #define SWM_AOT_NEVER	WM_APP + 6
 #define SWM_USE_DWM		WM_APP + 7
+#define SWM_USE_ALT_BKSP	WM_APP + 8
+#define SWM_USE_WIN_BKSP	WM_APP + 9
 
 typedef enum
 {
@@ -29,9 +31,9 @@ typedef enum
 
 static const TCHAR *NBD_APP_TITLE = _T("noborder v1.6.0");
 static const TCHAR *NBD_APP_DESC =
-	_T("Version 1.6.0 . by Raymai97 . in VS2019\n\n")
-	_T("A tool to switch current window into 'Borderless' mode.\n")
-	_T("Press ALT+BACKSPACE to toggle.");
+	_T("Version 1.6.0 . by raymai97\n\n")
+	_T("Use hotkey to switch foreground window to 'Borderless' and vice versa.\n")
+	_T("By default, the hotkey is set to ALT+BACKSPACE.");
 static const TCHAR *NBD_MUTEX_NAME = _T("NOBORDER MUTEX");
 static const TCHAR *NBD_DUMMY_MSG = _T("noborder MsgWindow");
 static const TCHAR *NBD_DUMMY_NI = _T("noborder NotifyIcon");
@@ -45,11 +47,13 @@ static const TCHAR *NBD_CMI_AOT_ALWAYS = _T("Always");
 static const TCHAR *NBD_CMI_AOT_NEVER = _T("Never");
 static const TCHAR *NBD_CMI_EXCLUDE_TASKBAR = _T("Exclude Taskbar");
 static const TCHAR *NBD_CMI_USE_DWM = _T("Use DWM formula");
+static const TCHAR *NBD_CMI_HOTKEY = _T("Hotkey");
+static const TCHAR *NBD_CMI_USE_ALT_BKSP = _T("Use Alt+Backspace");
+static const TCHAR *NBD_CMI_USE_WIN_BKSP = _T("Use Win+Backspace");
 static const TCHAR *NBD_CMI_ABOUT = _T("About");
 static const TCHAR *NBD_CMI_EXIT = _T("Exit");
 
 static const DWORD KEY_STYLE = (WS_CAPTION | WS_THICKFRAME);
-static const DWORD TOGGLE_MOD = VK_MENU;
 static const DWORD TOGGLE_KEY = VK_BACK;
 
 class PosSize

@@ -7,6 +7,8 @@ bool canUseDWM;
 bool excludeTaskbar;
 AOT alwaysOnTopMode;
 bool useDWM;
+bool useAltBksp = true;
+bool useWinBksp;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
@@ -116,7 +118,18 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
-			fEatKeystroke = ( (p->vkCode == TOGGLE_KEY) & (GetAsyncKeyState(TOGGLE_MOD) < 0) );
+			if (p->vkCode == TOGGLE_KEY)
+			{
+				if (useAltBksp)
+				{
+					fEatKeystroke |= GetAsyncKeyState(VK_MENU) < 0;
+				}
+				if (useWinBksp)
+				{
+					fEatKeystroke |= GetAsyncKeyState(VK_LWIN) < 0;
+					fEatKeystroke |= GetAsyncKeyState(VK_RWIN) < 0;
+				}
+			}
 			if (fEatKeystroke) ToggleNoborder();
 			break;
 		}
@@ -141,6 +154,14 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
 	if (canUseDWM) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
 	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
+	HMENU hHotkeyMenu = CreatePopupMenu();
+	if (hHotkeyMenu)
+	{
+		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_ALT_BKSP, NBD_CMI_USE_ALT_BKSP);
+		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_WIN_BKSP, NBD_CMI_USE_WIN_BKSP);
+		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hHotkeyMenu, NBD_CMI_HOTKEY);
+	}
+	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
 
@@ -158,6 +179,8 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 		break;
 	}
 	if (useDWM) { CheckMenuItem(hMenu, SWM_USE_DWM, MF_BYCOMMAND | MF_CHECKED); }
+	if (useAltBksp) { CheckMenuItem(hMenu, SWM_USE_ALT_BKSP, MF_BYCOMMAND | MF_CHECKED); }
+	if (useWinBksp) { CheckMenuItem(hMenu, SWM_USE_WIN_BKSP, MF_BYCOMMAND | MF_CHECKED); }
 }
 
 void MenuItemSelectedProc(WORD id, WORD event)
@@ -175,6 +198,8 @@ void MenuItemSelectedProc(WORD id, WORD event)
 		else if (id == SWM_AOT_NEVER) { alwaysOnTopMode = AOT_NEVER; }
 		else if (id == SWM_EXCLUDE_TASKBAR) { excludeTaskbar = !excludeTaskbar; }
 		else if (id == SWM_USE_DWM) { useDWM = !useDWM; }
+		else if (id == SWM_USE_ALT_BKSP) { useAltBksp = !useAltBksp; }
+		else if (id == SWM_USE_WIN_BKSP) { useWinBksp = !useWinBksp; }
 		if (!SaveConfig())
 		{
 			TCHAR msg[100] = _T("Failed to write data into ");
@@ -203,6 +228,11 @@ bool LoadConfig()
 			default: alwaysOnTopMode = AOT_AUTO; break;
 			}
 			useDWM = buf[2] != 0;
+			if (read >= 5) // new cfg since v1.4
+			{
+				useAltBksp = buf[3] != 0;
+				useWinBksp = buf[4] != 0;
+			}
 		}
 		CloseHandle(hFile);
 		return ok;
@@ -216,12 +246,16 @@ bool SaveConfig()
 		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
+		BYTE buf[8] = { 0 };
 		DWORD written;
-		WriteFile(hFile, &excludeTaskbar, 1, &written, nullptr);
-		WriteFile(hFile, &alwaysOnTopMode, 1, &written, nullptr);
-		WriteFile(hFile, &useDWM, 1, &written, nullptr);
+		buf[0] = excludeTaskbar;
+		buf[1] = (BYTE)alwaysOnTopMode;
+		buf[2] = useDWM;
+		buf[3] = useAltBksp;
+		buf[4] = useWinBksp;
+		bool ok = WriteFile(hFile, buf, 5, &written, nullptr) && (written == 5);
 		CloseHandle(hFile);
-		return (written > 0);
+		return ok;
 	}
 	return false;
 }
