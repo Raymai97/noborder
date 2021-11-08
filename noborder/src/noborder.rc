@@ -104,6 +104,8 @@ END
 #endif    // Neutral (Default) resources
 /////////////////////////////////////////////////////////////////////////////
 
+// MANIFEST FILE
+1  24  "app_manifest.min"
 
 
 #ifndef APSTUDIO_INVOKED
