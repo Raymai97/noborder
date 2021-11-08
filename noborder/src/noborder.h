@@ -163,3 +163,6 @@ extern bool canUseDWM;
 extern bool excludeTaskbar;
 extern AOT alwaysOnTopMode;
 extern bool useDWM;
+EXTERN_C FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
+
+EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint);

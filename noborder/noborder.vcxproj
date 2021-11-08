@@ -190,6 +190,9 @@
   <ItemGroup>
     <Image Include="src\noborder_icon.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="src\app.manifest" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

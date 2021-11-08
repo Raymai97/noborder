@@ -109,6 +109,18 @@ void DwmWindow::UpdateThumb()
 	props.dwFlags = DWM_TNP_VISIBLE | DWM_TNP_SOURCECLIENTAREAONLY | DWM_TNP_RECTDESTINATION | DWM_TNP_RECTSOURCE;
 	props.fSourceClientAreaOnly = true; // if false, DWM scale ugly!
 	props.fVisible = true;
+	if (x_lpfnPhyToLogPtForPerMonitorDPI)
+	{
+		POINT posPhy, posLog;
+		posPhy.x = this->target->psWin.X; posLog.x = posPhy.x;
+		posPhy.y = this->target->psWin.Y; posLog.y = posPhy.y;
+		HRESULT hr = Compat_PhyToLogPtForPerMonitorDPI(this->target->hWnd, &posLog);
+		if (SUCCEEDED(hr))
+		{
+			psSrc.Width = MulDiv(psSrc.Width, posLog.x, posPhy.x);
+			psSrc.Height = MulDiv(psSrc.Height, posLog.y, posPhy.y);
+		}
+	}
 	SetRect(&props.rcSource, 0, 0, psSrc.Width, psSrc.Height);
 	SetRect(&props.rcDestination, 0, 0, psDest.Width, psDest.Height);
 	Compat_DwmUpdateThumbnailProperties(this->hThumb, &props);

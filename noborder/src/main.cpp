@@ -7,11 +7,12 @@ bool canUseDWM;
 bool excludeTaskbar;
 AOT alwaysOnTopMode;
 bool useDWM;
-bool useAltBksp = true;
-bool useWinBksp;
+FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
+static bool useAltBksp = true;
+static bool useWinBksp;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -77,6 +78,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
+	HMODULE hMod_user32 = GetModuleHandle(_T("user32"));
+	if (hMod_user32)
+	{
+		x_lpfnPhyToLogPtForPerMonitorDPI = GetProcAddress(hMod_user32,
+			"PhysicalToLogicalPointForPerMonitorDPI");
+	}
 	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
 	canUseDWM = x_compat_dwmapi_hMod != 0;
 	CoreInit();
@@ -258,4 +265,11 @@ bool SaveConfig()
 		return ok;
 	}
 	return false;
+}
+
+EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint)
+{
+	typedef HRESULT(WINAPI *fn_t)(HWND, LPPOINT);
+	fn_t fn = (fn_t)x_lpfnPhyToLogPtForPerMonitorDPI;
+	return fn ? fn(hWnd, lpPoint) : E_NOTIMPL;
 }
