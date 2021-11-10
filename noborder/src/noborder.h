@@ -171,9 +171,9 @@ typedef struct Cfg
 } Cfg;
 
 // Global variables
-extern HINSTANCE hInst;
-extern NotifyIcon *notifyIcon;
-extern bool canUseDWM;
+extern HINSTANCE x_hInst;
+extern NotifyIcon *x_pNotifyIcon;
+extern bool x_canUseDwm;
 extern Cfg x_cfg;
 EXTERN_C FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 

@@ -7,7 +7,7 @@ DwmWindow::DwmWindow() :
 	WNDCLASSEX wcex;
 	ZeroMemory(&wcex, sizeof(wcex));
 	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.hInstance = hInst;
+	wcex.hInstance = x_hInst;
 	wcex.lpszClassName = NBD_DUMMY_DWMWINDOW;
 	wcex.lpfnWndProc = DwmWindow::WndProc;
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
@@ -26,7 +26,7 @@ DwmWindow::DwmWindow() :
 		CW_USEDEFAULT, 0,
 		hWndParent,
 		hMenu,
-		hInst,
+		x_hInst,
 		lpParam);
 	if (this->hWnd == nullptr)	{ MSGERR("FATAL: DwmWindow InitHwnd failed!"); PostQuitMessage(1); }
 }
@@ -34,7 +34,7 @@ DwmWindow::DwmWindow() :
 DwmWindow::~DwmWindow()
 {
 	DestroyWindow(this->hWnd);
-	UnregisterClass(NBD_DUMMY_DWMWINDOW, hInst);
+	UnregisterClass(NBD_DUMMY_DWMWINDOW, x_hInst);
 }
 
 void DwmWindow::Start(Target *pTarget, bool isTopMost)
@@ -43,7 +43,7 @@ void DwmWindow::Start(Target *pTarget, bool isTopMost)
 	Compat_DwmIsCompositionEnabled(&dwmIsOK);
 	if (!dwmIsOK)
 	{
-		notifyIcon->ShowBalloon(
+		x_pNotifyIcon->ShowBalloon(
 			_T("Vista/Win7 users may enable it by using Aero theme."),
 			_T("DWM is not enabled!"),
 			NIIF_ERROR);
@@ -52,7 +52,7 @@ void DwmWindow::Start(Target *pTarget, bool isTopMost)
 	}
 	if (HASFLAG(pTarget->exStyle, WS_EX_LAYERED))
 	{
-		notifyIcon->ShowBalloon(
+		x_pNotifyIcon->ShowBalloon(
 			_T("DWM formula doesn't work on Layered window."),
 			_T("Unsupported!"),
 			NIIF_ERROR);

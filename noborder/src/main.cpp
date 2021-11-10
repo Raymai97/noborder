@@ -1,9 +1,9 @@
 #include "noborder.h"
 
 // For all cpp
-HINSTANCE hInst;
-NotifyIcon *notifyIcon;
-bool canUseDWM;
+HINSTANCE x_hInst;
+NotifyIcon *x_pNotifyIcon;
+bool x_canUseDwm;
 Cfg x_cfg;
 FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
@@ -20,7 +20,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	UNREFERENCED_PARAMETER(nCmdShow);
-	hInst = hInstance;
+	x_hInst = hInstance;
 	x_cfg.wantUseAltBksp = true;
 	
 	// Don't continue if noborder is already running
@@ -44,22 +44,22 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	WNDCLASSEX wcex;
 	ZeroMemory(&wcex, sizeof(wcex));
 	wcex.cbSize = sizeof(wcex);
-	wcex.hInstance = hInst;
+	wcex.hInstance = x_hInst;
 	wcex.lpszClassName = NBD_DUMMY_MSG;
 	wcex.lpfnWndProc = WndProc;
 	if (!RegisterClassEx(&wcex) ||
-		!CreateWindow(NBD_DUMMY_MSG, NBD_DUMMY_MSG, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, hInst, 0))
+		!CreateWindow(NBD_DUMMY_MSG, NBD_DUMMY_MSG, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, x_hInst, 0))
 	{
 		MSGERR("FATAL: MsgWindow creation failed!"); return 1;
 	}
 
 	// Init Notify Icon
-	notifyIcon = new NotifyIcon(hInst, NBD_DUMMY_NI, NOTIFYICON_ID);
-	if (notifyIcon->HwndInitFailed()) { MSGERR("FATAL: NotifyIcon creation failed!"); return 1; }
-	notifyIcon->SetTip(NBD_TRAYICON_TIP);
-	notifyIcon->SetIcon((HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_SHARED));
-	notifyIcon->OnMenuItemSelected = MenuItemSelectedProc;
-	notifyIcon->OnMenuCreating = MenuCreatingProc;
+	x_pNotifyIcon = new NotifyIcon(x_hInst, NBD_DUMMY_NI, NOTIFYICON_ID);
+	if (x_pNotifyIcon->HwndInitFailed()) { MSGERR("FATAL: NotifyIcon creation failed!"); return 1; }
+	x_pNotifyIcon->SetTip(NBD_TRAYICON_TIP);
+	x_pNotifyIcon->SetIcon((HICON)LoadImage(x_hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_SHARED));
+	x_pNotifyIcon->OnMenuItemSelected = MenuItemSelectedProc;
+	x_pNotifyIcon->OnMenuCreating = MenuCreatingProc;
 
 	// Install the low-level keyboard hooks
 	HHOOK hhk = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandle(nullptr), 0);
@@ -82,7 +82,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 			"PhysicalToLogicalPointForPerMonitorDPI");
 	}
 	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
-	canUseDWM = x_compat_dwmapi_hMod != 0;
+	x_canUseDwm = x_compat_dwmapi_hMod != 0;
 	CoreInit();
 
 	MSG msg;
@@ -95,7 +95,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	CoreClosing();
 	SaveConfig();
 	UnhookWindowsHookEx(hhk);
-	delete notifyIcon;
+	delete x_pNotifyIcon;
 	ReleaseMutex(hMutex);
 	return (int)msg.wParam;
 }
@@ -103,7 +103,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (msg == PREVINST_CALL && notifyIcon->ShowBalloon(
+	if (msg == PREVINST_CALL && x_pNotifyIcon->ShowBalloon(
 		_T("It is in the Taskbar Notification Area."),
 		_T("noborder is already running!"), NIIF_INFO))
 	{
@@ -156,7 +156,7 @@ void MenuCreatingProc(HMENU hMenu)
 		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
 	}
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
-	if (canUseDWM) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
+	if (x_canUseDwm) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
 	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	HMENU hHotkeyMenu = CreatePopupMenu();
 	if (hHotkeyMenu)
@@ -219,7 +219,7 @@ void MenuItemSelectedProc(WORD id)
 		{
 			TCHAR msg[100] = _T("Failed to write data into ");
 			_tcscat(msg, NBD_CONFIG_FILENAME);
-			notifyIcon->ShowBalloon(msg, _T("Failed to save config!"), NIIF_ERROR);
+			x_pNotifyIcon->ShowBalloon(msg, _T("Failed to save config!"), NIIF_ERROR);
 		}
 	}
 }
