@@ -146,9 +146,8 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 }
 
 
-void MenuCreatingProc(UINT niId, HMENU hMenu)
+void MenuCreatingProc(HMENU hMenu)
 {
-	UNREFERENCED_PARAMETER(niId);
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_GRAYED, 0, NBD_APP_TITLE);
 	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	HMENU hAOTMenu = CreatePopupMenu();
@@ -191,9 +190,8 @@ void MenuCreatingProc(UINT niId, HMENU hMenu)
 	if (useWinBksp) { CheckMenuItem(hMenu, SWM_USE_WIN_BKSP, MF_BYCOMMAND | MF_CHECKED); }
 }
 
-void MenuItemSelectedProc(WORD id, WORD event)
+void MenuItemSelectedProc(WORD id)
 {
-	UNREFERENCED_PARAMETER(event);
 	if (id == SWM_ABOUT)
 	{
 		MessageBox(nullptr, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);

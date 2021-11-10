@@ -30,6 +30,6 @@ public:
 	BOOL HideBalloon();
 	BOOL ShowBalloon();
 	BOOL ShowBalloon(LPCTSTR szMsg, LPCTSTR szTitle, DWORD niif);
-	void(*OnMenuCreating)(UINT niId, HMENU hMenu);
-	void(*OnMenuItemSelected)(WORD itemId, WORD event);
+	void(*OnMenuCreating)(HMENU hMenu);
+	void(*OnMenuItemSelected)(WORD itemId);
 };

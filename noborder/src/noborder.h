@@ -142,8 +142,8 @@ public:
 // Forward declarations of function
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
-void MenuCreatingProc(UINT niId, HMENU hMenu);
-void MenuItemSelectedProc(WORD id, WORD event);
+void MenuCreatingProc(HMENU hMenu);
+void MenuItemSelectedProc(WORD id);
 bool LoadConfig();
 bool SaveConfig();
 // Core.cpp

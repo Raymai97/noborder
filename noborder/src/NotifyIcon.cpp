@@ -155,12 +155,13 @@ BOOL NotifyIcon::Update(bool showInTray)
 
 void NotifyIcon::ShowMenu(UINT niId)
 {
+	UNREFERENCED_PARAMETER(niId);
 	POINT m;
 	GetCursorPos(&m);
 	HMENU hMenu = CreatePopupMenu();
 	if (hMenu)
 	{
-		if (OnMenuCreating) { OnMenuCreating(niId, hMenu); }
+		if (OnMenuCreating) { OnMenuCreating(hMenu); }
 		SetForegroundWindow(this->hWnd); // else menu won't disappear when lose focus
 		TrackPopupMenu(hMenu, TPM_RIGHTBUTTON, m.x, m.y, 0, this->hWnd, nullptr);
 		DestroyMenu(hMenu);
@@ -189,7 +190,7 @@ LRESULT CALLBACK NotifyIcon::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
 	{
 		if (me->OnMenuItemSelected)
 		{
-			me->OnMenuItemSelected(LOWORD(wParam), HIWORD(wParam));
+			me->OnMenuItemSelected(LOWORD(wParam));
 		}
 	}
 	else if (msg == me->wmTaskbarCreated)
