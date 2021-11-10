@@ -7,7 +7,7 @@ RECT displayRect;
 
 void CoreInit()
 {
-	if (x_canUseDwm)	{ dwmWindow = new DwmWindow(); }
+	if (x_canUseDwm) { dwmWindow = new DwmWindow(); }
 	else { x_cfg.wantUseDwmFormula = false; }
 }
 

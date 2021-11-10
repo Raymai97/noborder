@@ -16,16 +16,18 @@ FORCEINLINE void flip(bool &b)
 #define MSGERR(x)		MessageBox(nullptr, _T(x), _T("noborder Error!"), MB_OK | MB_ICONSTOP | MB_TOPMOST)
 #define NOTIFYICON_ID	1
 #define PREVINST_CALL	WM_APP + 97
-#define SWM_TRAYMSG		WM_APP
-#define SWM_ABOUT		WM_APP + 1
-#define SWM_EXIT		WM_APP + 2
-#define SWM_EXCLUDE_TASKBAR		WM_APP + 3
-#define SWM_AOT_AUTO	WM_APP + 4
-#define SWM_AOT_ALWAYS	WM_APP + 5
-#define SWM_AOT_NEVER	WM_APP + 6
-#define SWM_USE_DWM		WM_APP + 7
-#define SWM_USE_ALT_BKSP	WM_APP + 8
-#define SWM_USE_WIN_BKSP	WM_APP + 9
+
+// --- NotifyIcon Context Menu IDs ---
+
+#define IDM_About             101
+#define IDM_Exit              102
+#define IDM_ExcludeTaskbar    103
+#define IDM_OnTopMode_Auto        104
+#define IDM_OnTopMode_Always      105
+#define IDM_OnTopMode_Never       106
+#define IDM_UseDwmFormula     107
+#define IDM_UseAltBksp        108
+#define IDM_UseWinBksp        109
 
 typedef enum
 {

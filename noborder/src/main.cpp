@@ -150,71 +150,71 @@ void MenuCreatingProc(HMENU hMenu)
 	HMENU hAOTMenu = CreatePopupMenu();
 	if (hAOTMenu)
 	{
-		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_AUTO, NBD_CMI_AOT_AUTO);
-		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_ALWAYS, NBD_CMI_AOT_ALWAYS);
-		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, SWM_AOT_NEVER, NBD_CMI_AOT_NEVER);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, IDM_OnTopMode_Auto, NBD_CMI_AOT_AUTO);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, IDM_OnTopMode_Always, NBD_CMI_AOT_ALWAYS);
+		InsertMenu(hAOTMenu, (UINT)-1, MF_BYPOSITION, IDM_OnTopMode_Never, NBD_CMI_AOT_NEVER);
 		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hAOTMenu, NBD_CMI_AOT);
 	}
-	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXCLUDE_TASKBAR, NBD_CMI_EXCLUDE_TASKBAR);
-	if (x_canUseDwm) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_DWM, NBD_CMI_USE_DWM); }
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, IDM_ExcludeTaskbar, NBD_CMI_EXCLUDE_TASKBAR);
+	if (x_canUseDwm) { InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, IDM_UseDwmFormula, NBD_CMI_USE_DWM); }
 	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
 	HMENU hHotkeyMenu = CreatePopupMenu();
 	if (hHotkeyMenu)
 	{
-		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_ALT_BKSP, NBD_CMI_USE_ALT_BKSP);
-		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, SWM_USE_WIN_BKSP, NBD_CMI_USE_WIN_BKSP);
+		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, IDM_UseAltBksp, NBD_CMI_USE_ALT_BKSP);
+		InsertMenu(hHotkeyMenu, (UINT)-1, MF_BYPOSITION, IDM_UseWinBksp, NBD_CMI_USE_WIN_BKSP);
 		InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION | MF_POPUP, (UINT_PTR)hHotkeyMenu, NBD_CMI_HOTKEY);
 	}
 	InsertMenu(hMenu, (UINT)-1, MF_SEPARATOR, 0, nullptr);
-	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
-	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, IDM_About, NBD_CMI_ABOUT);
+	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, IDM_Exit, NBD_CMI_EXIT);
 
 	if (x_cfg.wantExcludeTaskbar)
 	{
-		CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_ExcludeTaskbar, MF_BYCOMMAND | MF_CHECKED);
 	}
 	switch (x_cfg.onTopMode)
 	{
 	case OnTopMode_Auto:
-		CheckMenuItem(hMenu, SWM_AOT_AUTO, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_OnTopMode_Auto, MF_BYCOMMAND | MF_CHECKED);
 		break;
 	case OnTopMode_Always:
-		CheckMenuItem(hMenu, SWM_AOT_ALWAYS, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_OnTopMode_Always, MF_BYCOMMAND | MF_CHECKED);
 		break;
 	case OnTopMode_Never:
-		CheckMenuItem(hMenu, SWM_AOT_NEVER, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_OnTopMode_Never, MF_BYCOMMAND | MF_CHECKED);
 		break;
 	}
 	if (x_cfg.wantUseDwmFormula)
 	{
-		CheckMenuItem(hMenu, SWM_USE_DWM, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_UseDwmFormula, MF_BYCOMMAND | MF_CHECKED);
 	}
 	if (x_cfg.wantUseAltBksp)
 	{
-		CheckMenuItem(hMenu, SWM_USE_ALT_BKSP, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_UseAltBksp, MF_BYCOMMAND | MF_CHECKED);
 	}
 	if (x_cfg.wantUseWinBksp)
 	{
-		CheckMenuItem(hMenu, SWM_USE_WIN_BKSP, MF_BYCOMMAND | MF_CHECKED);
+		CheckMenuItem(hMenu, IDM_UseWinBksp, MF_BYCOMMAND | MF_CHECKED);
 	}
 }
 
 void MenuItemSelectedProc(WORD id)
 {
-	if (id == SWM_ABOUT)
+	if (id == IDM_About)
 	{
 		MessageBox(nullptr, NBD_APP_DESC, NBD_APP_TITLE, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
 	}
-	else if (id == SWM_EXIT) { PostQuitMessage(0); }
+	else if (id == IDM_Exit) { PostQuitMessage(0); }
 	else
 	{
-		if (id == SWM_AOT_AUTO) { x_cfg.onTopMode = OnTopMode_Auto; }
-		else if (id == SWM_AOT_ALWAYS) { x_cfg.onTopMode = OnTopMode_Always; }
-		else if (id == SWM_AOT_NEVER) { x_cfg.onTopMode = OnTopMode_Never; }
-		else if (id == SWM_EXCLUDE_TASKBAR) { flip(x_cfg.wantExcludeTaskbar); }
-		else if (id == SWM_USE_DWM) { flip(x_cfg.wantUseDwmFormula); }
-		else if (id == SWM_USE_ALT_BKSP) { flip(x_cfg.wantUseAltBksp); }
-		else if (id == SWM_USE_WIN_BKSP) { flip(x_cfg.wantUseWinBksp); }
+		if (id == IDM_OnTopMode_Auto) { x_cfg.onTopMode = OnTopMode_Auto; }
+		else if (id == IDM_OnTopMode_Always) { x_cfg.onTopMode = OnTopMode_Always; }
+		else if (id == IDM_OnTopMode_Never) { x_cfg.onTopMode = OnTopMode_Never; }
+		else if (id == IDM_ExcludeTaskbar) { flip(x_cfg.wantExcludeTaskbar); }
+		else if (id == IDM_UseDwmFormula) { flip(x_cfg.wantUseDwmFormula); }
+		else if (id == IDM_UseAltBksp) { flip(x_cfg.wantUseAltBksp); }
+		else if (id == IDM_UseWinBksp) { flip(x_cfg.wantUseWinBksp); }
 		if (!SaveConfig())
 		{
 			TCHAR msg[100] = _T("Failed to write data into ");
