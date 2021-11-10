@@ -60,8 +60,8 @@ void DoNoborder(Target *t)
 	t->exStyle = GetWindowLong(t->hWnd, GWL_EXSTYLE);
 	t->isUsingDwm = useDWM;
 	bool onTop = (
-		alwaysOnTopMode == AOT_ALWAYS ? true :
-		alwaysOnTopMode == AOT_NEVER ? false :
+		onTopMode == OnTopMode_Always ? true :
+		onTopMode == OnTopMode_Never ? false :
 		excludeTaskbar ? false : true);
 	if (useDWM)
 	{

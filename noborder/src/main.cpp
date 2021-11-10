@@ -5,7 +5,7 @@ HINSTANCE hInst;
 NotifyIcon *notifyIcon;
 bool canUseDWM;
 bool excludeTaskbar;
-AOT alwaysOnTopMode;
+OnTopMode onTopMode;
 bool useDWM;
 FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
@@ -173,15 +173,15 @@ void MenuCreatingProc(HMENU hMenu)
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
 
 	if (excludeTaskbar) { CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED); }
-	switch (alwaysOnTopMode)
+	switch (onTopMode)
 	{
-	case AOT_AUTO:
+	case OnTopMode_Auto:
 		CheckMenuItem(hMenu, SWM_AOT_AUTO, MF_BYCOMMAND | MF_CHECKED);
 		break;
-	case AOT_ALWAYS:
+	case OnTopMode_Always:
 		CheckMenuItem(hMenu, SWM_AOT_ALWAYS, MF_BYCOMMAND | MF_CHECKED);
 		break;
-	case AOT_NEVER:
+	case OnTopMode_Never:
 		CheckMenuItem(hMenu, SWM_AOT_NEVER, MF_BYCOMMAND | MF_CHECKED);
 		break;
 	}
@@ -199,9 +199,9 @@ void MenuItemSelectedProc(WORD id)
 	else if (id == SWM_EXIT) { PostQuitMessage(0); }
 	else
 	{
-		if (id == SWM_AOT_AUTO) { alwaysOnTopMode = AOT_AUTO; }
-		else if (id == SWM_AOT_ALWAYS) { alwaysOnTopMode = AOT_ALWAYS; }
-		else if (id == SWM_AOT_NEVER) { alwaysOnTopMode = AOT_NEVER; }
+		if (id == SWM_AOT_AUTO) { onTopMode = OnTopMode_Auto; }
+		else if (id == SWM_AOT_ALWAYS) { onTopMode = OnTopMode_Always; }
+		else if (id == SWM_AOT_NEVER) { onTopMode = OnTopMode_Never; }
 		else if (id == SWM_EXCLUDE_TASKBAR) { excludeTaskbar = !excludeTaskbar; }
 		else if (id == SWM_USE_DWM) { useDWM = !useDWM; }
 		else if (id == SWM_USE_ALT_BKSP) { useAltBksp = !useAltBksp; }
@@ -229,9 +229,9 @@ bool LoadConfig()
 			excludeTaskbar = buf[0] != 0;
 			switch (buf[1])
 			{
-			case AOT_ALWAYS: alwaysOnTopMode = AOT_ALWAYS; break;
-			case AOT_NEVER: alwaysOnTopMode = AOT_NEVER; break;
-			default: alwaysOnTopMode = AOT_AUTO; break;
+			case OnTopMode_Always: onTopMode = OnTopMode_Always; break;
+			case OnTopMode_Never: onTopMode = OnTopMode_Never; break;
+			default: onTopMode = OnTopMode_Auto; break;
 			}
 			useDWM = buf[2] != 0;
 			if (read >= 5) // new cfg since v1.4
@@ -255,7 +255,7 @@ bool SaveConfig()
 		BYTE buf[8] = { 0 };
 		DWORD written;
 		buf[0] = excludeTaskbar;
-		buf[1] = (BYTE)alwaysOnTopMode;
+		buf[1] = (BYTE)onTopMode;
 		buf[2] = useDWM;
 		buf[3] = useAltBksp;
 		buf[4] = useWinBksp;

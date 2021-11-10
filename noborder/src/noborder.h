@@ -24,10 +24,10 @@
 
 typedef enum
 {
-	AOT_AUTO,
-	AOT_ALWAYS,
-	AOT_NEVER
-} AOT;
+	OnTopMode_Auto,
+	OnTopMode_Always,
+	OnTopMode_Never
+} OnTopMode;
 
 static const TCHAR *NBD_APP_TITLE = _T("noborder v1.6.0");
 static const TCHAR *NBD_APP_DESC =
@@ -161,7 +161,7 @@ extern HINSTANCE hInst;
 extern NotifyIcon *notifyIcon;
 extern bool canUseDWM;
 extern bool excludeTaskbar;
-extern AOT alwaysOnTopMode;
+extern OnTopMode onTopMode;
 extern bool useDWM;
 EXTERN_C FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
