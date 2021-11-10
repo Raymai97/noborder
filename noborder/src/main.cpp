@@ -107,7 +107,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (msg == PREVINST_CALL && notifyIcon->ShowBalloon(
-		_T("You can find me here."), _T("noborder is already running!"), NIIF_INFO))
+		_T("It is in the Taskbar Notification Area."),
+		_T("noborder is already running!"), NIIF_INFO))
 	{
 		// tell 'new instance' that 'ShowBalloon' is OK
 		return PREVINST_CALL; 
