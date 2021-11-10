@@ -4,15 +4,11 @@
 HINSTANCE hInst;
 NotifyIcon *notifyIcon;
 bool canUseDWM;
-bool excludeTaskbar;
-OnTopMode onTopMode;
-bool useDWM;
+Cfg x_cfg;
 FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
-static bool useAltBksp = true;
-static bool useWinBksp;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -25,6 +21,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	UNREFERENCED_PARAMETER(nCmdShow);
 	hInst = hInstance;
+	x_cfg.wantUseAltBksp = true;
 	
 	// Don't continue if noborder is already running
 	hMutex = CreateMutex(nullptr, true, NBD_MUTEX_NAME);
@@ -128,11 +125,11 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
 			if (p->vkCode == TOGGLE_KEY)
 			{
-				if (useAltBksp)
+				if (x_cfg.wantUseAltBksp)
 				{
 					fEatKeystroke |= GetAsyncKeyState(VK_MENU) < 0;
 				}
-				if (useWinBksp)
+				if (x_cfg.wantUseWinBksp)
 				{
 					fEatKeystroke |= GetAsyncKeyState(VK_LWIN) < 0;
 					fEatKeystroke |= GetAsyncKeyState(VK_RWIN) < 0;
@@ -172,8 +169,11 @@ void MenuCreatingProc(HMENU hMenu)
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_ABOUT, NBD_CMI_ABOUT);
 	InsertMenu(hMenu, (UINT)-1, MF_BYPOSITION, SWM_EXIT, NBD_CMI_EXIT);
 
-	if (excludeTaskbar) { CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED); }
-	switch (onTopMode)
+	if (x_cfg.wantExcludeTaskbar)
+	{
+		CheckMenuItem(hMenu, SWM_EXCLUDE_TASKBAR, MF_BYCOMMAND | MF_CHECKED);
+	}
+	switch (x_cfg.onTopMode)
 	{
 	case OnTopMode_Auto:
 		CheckMenuItem(hMenu, SWM_AOT_AUTO, MF_BYCOMMAND | MF_CHECKED);
@@ -185,9 +185,18 @@ void MenuCreatingProc(HMENU hMenu)
 		CheckMenuItem(hMenu, SWM_AOT_NEVER, MF_BYCOMMAND | MF_CHECKED);
 		break;
 	}
-	if (useDWM) { CheckMenuItem(hMenu, SWM_USE_DWM, MF_BYCOMMAND | MF_CHECKED); }
-	if (useAltBksp) { CheckMenuItem(hMenu, SWM_USE_ALT_BKSP, MF_BYCOMMAND | MF_CHECKED); }
-	if (useWinBksp) { CheckMenuItem(hMenu, SWM_USE_WIN_BKSP, MF_BYCOMMAND | MF_CHECKED); }
+	if (x_cfg.wantUseDwmFormula)
+	{
+		CheckMenuItem(hMenu, SWM_USE_DWM, MF_BYCOMMAND | MF_CHECKED);
+	}
+	if (x_cfg.wantUseAltBksp)
+	{
+		CheckMenuItem(hMenu, SWM_USE_ALT_BKSP, MF_BYCOMMAND | MF_CHECKED);
+	}
+	if (x_cfg.wantUseWinBksp)
+	{
+		CheckMenuItem(hMenu, SWM_USE_WIN_BKSP, MF_BYCOMMAND | MF_CHECKED);
+	}
 }
 
 void MenuItemSelectedProc(WORD id)
@@ -199,13 +208,13 @@ void MenuItemSelectedProc(WORD id)
 	else if (id == SWM_EXIT) { PostQuitMessage(0); }
 	else
 	{
-		if (id == SWM_AOT_AUTO) { onTopMode = OnTopMode_Auto; }
-		else if (id == SWM_AOT_ALWAYS) { onTopMode = OnTopMode_Always; }
-		else if (id == SWM_AOT_NEVER) { onTopMode = OnTopMode_Never; }
-		else if (id == SWM_EXCLUDE_TASKBAR) { excludeTaskbar = !excludeTaskbar; }
-		else if (id == SWM_USE_DWM) { useDWM = !useDWM; }
-		else if (id == SWM_USE_ALT_BKSP) { useAltBksp = !useAltBksp; }
-		else if (id == SWM_USE_WIN_BKSP) { useWinBksp = !useWinBksp; }
+		if (id == SWM_AOT_AUTO) { x_cfg.onTopMode = OnTopMode_Auto; }
+		else if (id == SWM_AOT_ALWAYS) { x_cfg.onTopMode = OnTopMode_Always; }
+		else if (id == SWM_AOT_NEVER) { x_cfg.onTopMode = OnTopMode_Never; }
+		else if (id == SWM_EXCLUDE_TASKBAR) { flip(x_cfg.wantExcludeTaskbar); }
+		else if (id == SWM_USE_DWM) { flip(x_cfg.wantUseDwmFormula); }
+		else if (id == SWM_USE_ALT_BKSP) { flip(x_cfg.wantUseAltBksp); }
+		else if (id == SWM_USE_WIN_BKSP) { flip(x_cfg.wantUseWinBksp); }
 		if (!SaveConfig())
 		{
 			TCHAR msg[100] = _T("Failed to write data into ");
@@ -226,18 +235,18 @@ bool LoadConfig()
 		bool ok = ReadFile(hFile, buf, sizeof(buf), &read, nullptr) && (read > 3);
 		if (ok)
 		{
-			excludeTaskbar = buf[0] != 0;
+			x_cfg.wantExcludeTaskbar = buf[0] != 0;
 			switch (buf[1])
 			{
-			case OnTopMode_Always: onTopMode = OnTopMode_Always; break;
-			case OnTopMode_Never: onTopMode = OnTopMode_Never; break;
-			default: onTopMode = OnTopMode_Auto; break;
+			case OnTopMode_Always: x_cfg.onTopMode = OnTopMode_Always; break;
+			case OnTopMode_Never: x_cfg.onTopMode = OnTopMode_Never; break;
+			default: x_cfg.onTopMode = OnTopMode_Auto; break;
 			}
-			useDWM = buf[2] != 0;
+			x_cfg.wantUseDwmFormula = buf[2] != 0;
 			if (read >= 5) // new cfg since v1.4
 			{
-				useAltBksp = buf[3] != 0;
-				useWinBksp = buf[4] != 0;
+				x_cfg.wantUseAltBksp = buf[3] != 0;
+				x_cfg.wantUseWinBksp = buf[4] != 0;
 			}
 		}
 		CloseHandle(hFile);
@@ -254,11 +263,11 @@ bool SaveConfig()
 	{
 		BYTE buf[8] = { 0 };
 		DWORD written;
-		buf[0] = excludeTaskbar;
-		buf[1] = (BYTE)onTopMode;
-		buf[2] = useDWM;
-		buf[3] = useAltBksp;
-		buf[4] = useWinBksp;
+		buf[0] = x_cfg.wantExcludeTaskbar;
+		buf[1] = (BYTE)(x_cfg.onTopMode);
+		buf[2] = x_cfg.wantUseDwmFormula;
+		buf[3] = x_cfg.wantUseAltBksp;
+		buf[4] = x_cfg.wantUseWinBksp;
 		bool ok = WriteFile(hFile, buf, 5, &written, nullptr) && (written == 5);
 		CloseHandle(hFile);
 		return ok;

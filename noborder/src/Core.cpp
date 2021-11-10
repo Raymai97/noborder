@@ -8,7 +8,7 @@ RECT displayRect;
 void CoreInit()
 {
 	if (canUseDWM)	{ dwmWindow = new DwmWindow(); }
-	else { useDWM = false; }
+	else { x_cfg.wantUseDwmFormula = false; }
 }
 
 void CoreClosing()
@@ -58,12 +58,12 @@ void DoNoborder(Target *t)
 	t->style = wInfo.dwStyle;
 	// DON'T USE wInfo.dwExStyle, it gives wrong value!
 	t->exStyle = GetWindowLong(t->hWnd, GWL_EXSTYLE);
-	t->isUsingDwm = useDWM;
+	t->isUsingDwm = x_cfg.wantUseDwmFormula;
 	bool onTop = (
-		onTopMode == OnTopMode_Always ? true :
-		onTopMode == OnTopMode_Never ? false :
-		excludeTaskbar ? false : true);
-	if (useDWM)
+		x_cfg.onTopMode == OnTopMode_Always ? true :
+		x_cfg.onTopMode == OnTopMode_Never ? false :
+		x_cfg.wantExcludeTaskbar ? false : true);
+	if (x_cfg.wantUseDwmFormula)
 	{
 		dwmWindow->Start(t, onTop);
 	}
@@ -142,7 +142,7 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData)
 		MONITORINFO info;
 		info.cbSize = sizeof(MONITORINFO);
 		GetMonitorInfo(h, &info);
-		displayRect = (excludeTaskbar ? info.rcWork : info.rcMonitor);
+		displayRect = (x_cfg.wantExcludeTaskbar ? info.rcWork : info.rcMonitor);
 	}
 	return true;
 }

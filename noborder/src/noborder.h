@@ -6,6 +6,11 @@
 #include "NotifyIcon.h"
 #include "resource.h"
 
+FORCEINLINE void flip(bool &b)
+{
+	b = !b;
+}
+
 // Define, Const, Class...
 #define HASFLAG(x, f)	((x & f) == f)
 #define MSGERR(x)		MessageBox(nullptr, _T(x), _T("noborder Error!"), MB_OK | MB_ICONSTOP | MB_TOPMOST)
@@ -156,13 +161,20 @@ PosSize NoborderPosSize(HWND hWnd, const PosSize psClient);
 BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData);
 void BringToTop(HWND hWnd, bool topMost);
 
+typedef struct Cfg
+{
+	bool wantExcludeTaskbar;
+	OnTopMode onTopMode;
+	bool wantUseDwmFormula;
+	bool wantUseAltBksp;
+	bool wantUseWinBksp;
+} Cfg;
+
 // Global variables
 extern HINSTANCE hInst;
 extern NotifyIcon *notifyIcon;
 extern bool canUseDWM;
-extern bool excludeTaskbar;
-extern OnTopMode onTopMode;
-extern bool useDWM;
+extern Cfg x_cfg;
 EXTERN_C FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
 EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint);
