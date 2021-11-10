@@ -2,8 +2,6 @@
 
 Target target;
 DwmWindow *dwmWindow;
-HMONITOR hMonitor;
-RECT displayRect;
 
 void CoreInit()
 {
@@ -110,8 +108,16 @@ PosSize NoborderPosSize(HWND hWnd, const PosSize psClient)
 	double ratio = (double)ps.Width / ps.Height;
 
 	// Find RECT of display containing the window
-	hMonitor = MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY);
-	EnumDisplayMonitors(nullptr, nullptr, MonitorEnumProc, 0);
+	// If GetMonitorInfo() somehow failed, we fallback to 640x480 at top-left corner.
+	RECT displayRect = { 0, 0, 640, 480 };
+	{
+		HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTOPRIMARY);
+		MONITORINFO mi = { sizeof(mi) };
+		if (GetMonitorInfo(hMon, &mi))
+		{
+			displayRect = (x_cfg.wantExcludeTaskbar ? mi.rcWork : mi.rcMonitor);
+		}
+	}
 
 	// Compute PosSize of 'nobordered' window
 	PosSize s = PosSize(displayRect);
@@ -130,21 +136,6 @@ PosSize NoborderPosSize(HWND hWnd, const PosSize psClient)
 	ps.X += s.X;
 	ps.Y += s.Y;
 	return ps;
-}
-
-BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData)
-{
-	UNREFERENCED_PARAMETER(hdc);
-	UNREFERENCED_PARAMETER(lprc);
-	UNREFERENCED_PARAMETER(dwData);
-	if (h == hMonitor)
-	{
-		MONITORINFO info;
-		info.cbSize = sizeof(MONITORINFO);
-		GetMonitorInfo(h, &info);
-		displayRect = (x_cfg.wantExcludeTaskbar ? info.rcWork : info.rcMonitor);
-	}
-	return true;
 }
 
 void BringToTop(HWND hWnd, bool topMost)

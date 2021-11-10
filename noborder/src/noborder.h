@@ -160,7 +160,6 @@ void ToggleNoborder();
 void DoNoborder(Target *t);
 void UndoNoborder(Target *t);
 PosSize NoborderPosSize(HWND hWnd, const PosSize psClient);
-BOOL CALLBACK MonitorEnumProc(HMONITOR h, HDC hdc, LPRECT lprc, LPARAM dwData);
 void BringToTop(HWND hWnd, bool topMost);
 
 typedef struct Cfg
