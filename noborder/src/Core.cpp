@@ -67,7 +67,7 @@ void DoNoborder(Target *t)
 	}
 	else
 	{
-		SetWindowLong(t->hWnd, GWL_STYLE, t->style & ~KEY_STYLE);
+		SetWindowLong(t->hWnd, GWL_STYLE, t->style & ~(WS_CAPTION | WS_THICKFRAME));
 		SetWindowPos(
 			t->hWnd,
 			onTop ? HWND_TOPMOST : HWND_NOTOPMOST,

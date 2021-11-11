@@ -146,7 +146,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN:
 		case WM_SYSKEYDOWN:
 			PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
-			if (p->vkCode == TOGGLE_KEY)
+			if (p->vkCode == VK_BACK)
 			{
 				if (x_cfg.wantUseAltBksp)
 				{

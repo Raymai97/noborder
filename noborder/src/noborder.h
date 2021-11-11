@@ -66,8 +66,6 @@ static const TCHAR *NBD_CMI_USE_WIN_BKSP = _T("Use Win+Backspace");
 static const TCHAR *NBD_CMI_ABOUT = _T("About");
 static const TCHAR *NBD_CMI_EXIT = _T("Exit");
 
-static const DWORD KEY_STYLE = (WS_CAPTION | WS_THICKFRAME);
-static const DWORD TOGGLE_KEY = VK_BACK;
 
 class PosSize
 {
