@@ -40,7 +40,9 @@ typedef enum
 // --- Windows Class Name ---
 //
 
+#define WCN_NbdDwmWindow  _T("noborder DwmWindow")
 #define WCN_NbdMsgWindow  _T("noborder MsgWindow")
+#define WCN_NotifyIconWindow  _T("noborder NotifyIcon")
 
 
 static const TCHAR *NBD_APP_TITLE = _T("noborder v1.6.0");
@@ -49,8 +51,6 @@ static const TCHAR *NBD_APP_DESC =
 	_T("Use hotkey to switch foreground window to 'Borderless' and vice versa.\n")
 	_T("By default, the hotkey is set to ALT+BACKSPACE.");
 static const TCHAR *NBD_MUTEX_NAME = _T("NOBORDER MUTEX");
-static const TCHAR *NBD_DUMMY_NI = _T("noborder NotifyIcon");
-static const TCHAR *NBD_DUMMY_DWMWINDOW = _T("noborder DwmWindow");
 static const TCHAR *NBD_CONFIG_FILENAME = _T("noborder.config");
 
 static const TCHAR *NBD_TRAYICON_TIP = NBD_APP_TITLE;

@@ -8,7 +8,7 @@ DwmWindow::DwmWindow() :
 	ZeroMemory(&wcex, sizeof(wcex));
 	wcex.cbSize = sizeof(WNDCLASSEX);
 	wcex.hInstance = x_hInst;
-	wcex.lpszClassName = NBD_DUMMY_DWMWINDOW;
+	wcex.lpszClassName = WCN_NbdDwmWindow;
 	wcex.lpfnWndProc = DwmWindow::WndProc;
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -19,8 +19,8 @@ DwmWindow::DwmWindow() :
 	LPVOID lpParam = this; // so WndProc can retrieve 'this' later
 	this->hWnd = CreateWindowEx(
 		WS_EX_TOOLWINDOW,
-		NBD_DUMMY_DWMWINDOW,
-		NBD_DUMMY_DWMWINDOW,
+		WCN_NbdDwmWindow,
+		WCN_NbdDwmWindow,
 		WS_POPUP,
 		CW_USEDEFAULT, 0,
 		CW_USEDEFAULT, 0,
@@ -34,7 +34,7 @@ DwmWindow::DwmWindow() :
 DwmWindow::~DwmWindow()
 {
 	DestroyWindow(this->hWnd);
-	UnregisterClass(NBD_DUMMY_DWMWINDOW, x_hInst);
+	UnregisterClass(WCN_NbdDwmWindow, x_hInst);
 }
 
 void DwmWindow::Start(Target *pTarget, bool isTopMost)

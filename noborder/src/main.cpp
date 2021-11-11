@@ -36,7 +36,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	}
 
 	// Init Notify Icon
-	x_pNotifyIcon = new NotifyIcon(x_hInst, NBD_DUMMY_NI, NOTIFYICON_ID);
+	x_pNotifyIcon = new NotifyIcon(x_hInst, WCN_NotifyIconWindow, NOTIFYICON_ID);
 	if (x_pNotifyIcon->HwndInitFailed()) { MSGERR("FATAL: NotifyIcon creation failed!"); return 1; }
 	x_pNotifyIcon->SetTip(NBD_TRAYICON_TIP);
 	x_pNotifyIcon->SetIcon((HICON)LoadImage(x_hInst, MAKEINTRESOURCE(IDI_NOBORDER), IMAGE_ICON, 16, 16, LR_SHARED));
