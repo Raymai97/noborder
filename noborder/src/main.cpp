@@ -15,42 +15,23 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LPTSTR lpCmdLine,
 	int nCmdShow)
 {
-	HANDLE hMutex = 0;
 	// Init
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	UNREFERENCED_PARAMETER(nCmdShow);
 	x_hInst = hInstance;
 	x_cfg.wantUseAltBksp = true;
-	
+
 	// Don't continue if noborder is already running
-	hMutex = CreateMutex(nullptr, true, NBD_MUTEX_NAME);
-	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	if (HasExistingInstance())
 	{
-		bool gotIt = false;
-		HWND hWnd = FindWindowEx(HWND_MESSAGE, nullptr, NBD_DUMMY_MSG, NBD_DUMMY_MSG);
-		if (hWnd) { gotIt = (SendMessage(hWnd, PREVINST_CALL, 0, 0) == PREVINST_CALL); }
-		// If prev instance is old ver / Explorer not running...
-		if (!gotIt) { MSGERR("noborder is already running!"); }
 		return 0;
-	}
-	if (!hMutex)
-	{
-		MSGERR("CreateMutex failed.");
-		return 99;
 	}
 
 	// Create message-only window
-	WNDCLASSEX wcex;
-	ZeroMemory(&wcex, sizeof(wcex));
-	wcex.cbSize = sizeof(wcex);
-	wcex.hInstance = x_hInst;
-	wcex.lpszClassName = NBD_DUMMY_MSG;
-	wcex.lpfnWndProc = WndProc;
-	if (!RegisterClassEx(&wcex) ||
-		!CreateWindow(NBD_DUMMY_MSG, NBD_DUMMY_MSG, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, x_hInst, 0))
+	if (!CreateNbdMsgWindow())
 	{
-		MSGERR("FATAL: MsgWindow creation failed!"); return 1;
+		return 1;
 	}
 
 	// Init Notify Icon
@@ -96,19 +77,61 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	SaveConfig();
 	UnhookWindowsHookEx(hhk);
 	delete x_pNotifyIcon;
-	ReleaseMutex(hMutex);
 	return (int)msg.wParam;
 }
 
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+bool HasExistingInstance(void)
 {
-	if (msg == PREVINST_CALL && x_pNotifyIcon->ShowBalloon(
-		_T("It is in the Taskbar Notification Area."),
-		_T("noborder is already running!"), NIIF_INFO))
+	// No need to keep track of the returned Mutex in this case as
+	// Windows will free the Mutex automatically when process exit.
+	CreateMutex(nullptr, true, NBD_MUTEX_NAME);
+	if (GetLastError() != ERROR_ALREADY_EXISTS)
 	{
-		// tell 'new instance' that 'ShowBalloon' is OK
-		return PREVINST_CALL; 
+		return false;
+	}
+	HWND hWnd = FindWindowEx(HWND_MESSAGE, 0, WCN_NbdMsgWindow, WCN_NbdMsgWindow);
+	LRESULT lRes = 0;
+	if (hWnd)
+	{
+		SendMessageTimeout(hWnd, PREVINST_CALL, 0, 0,
+			SMTO_BLOCK, 2000, (PDWORD_PTR)&lRes);
+	}
+	// If prev instance is old ver / Explorer not running...
+	if (lRes != PREVINST_CALL)
+	{
+		MSGERR("noborder is already running!");
+	}
+	return true;
+}
+
+bool CreateNbdMsgWindow(void)
+{
+	bool ok = false;
+	WNDCLASS wc = { 0 };
+	wc.hInstance = x_hInst;
+	wc.lpszClassName = WCN_NbdMsgWindow;
+	wc.lpfnWndProc = NbdMsgWndProc;
+	ok = !!RegisterClass(&wc);
+	if (ok)
+	{
+		ok = !!CreateWindow(WCN_NbdMsgWindow, WCN_NbdMsgWindow, 0,
+			0, 0, 0, 0, HWND_MESSAGE, 0, x_hInst, 0);
+	}
+	if (!ok)
+	{
+		MSGERR("FATAL: MsgWindow creation failed!");
+	}
+	return ok;
+}
+
+LRESULT CALLBACK NbdMsgWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (msg == PREVINST_CALL)
+	{
+		BOOL ok = x_pNotifyIcon->ShowBalloon(
+			_T("It is in the Taskbar Notification Area."),
+			_T("noborder is already running!"), NIIF_INFO);
+		return ok ? PREVINST_CALL : 0;
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }

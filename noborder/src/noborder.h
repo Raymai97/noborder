@@ -36,13 +36,19 @@ typedef enum
 	OnTopMode_Never
 } OnTopMode;
 
+//
+// --- Windows Class Name ---
+//
+
+#define WCN_NbdMsgWindow  _T("noborder MsgWindow")
+
+
 static const TCHAR *NBD_APP_TITLE = _T("noborder v1.6.0");
 static const TCHAR *NBD_APP_DESC =
 	_T("Version 1.6.0 . by raymai97\n\n")
 	_T("Use hotkey to switch foreground window to 'Borderless' and vice versa.\n")
 	_T("By default, the hotkey is set to ALT+BACKSPACE.");
 static const TCHAR *NBD_MUTEX_NAME = _T("NOBORDER MUTEX");
-static const TCHAR *NBD_DUMMY_MSG = _T("noborder MsgWindow");
 static const TCHAR *NBD_DUMMY_NI = _T("noborder NotifyIcon");
 static const TCHAR *NBD_DUMMY_DWMWINDOW = _T("noborder DwmWindow");
 static const TCHAR *NBD_CONFIG_FILENAME = _T("noborder.config");
@@ -147,7 +153,9 @@ public:
 };
 
 // Forward declarations of function
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+bool HasExistingInstance(void);
+bool CreateNbdMsgWindow(void);
+LRESULT CALLBACK NbdMsgWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 void MenuCreatingProc(HMENU hMenu);
 void MenuItemSelectedProc(WORD id);
