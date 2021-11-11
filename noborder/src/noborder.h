@@ -111,6 +111,20 @@ public:
 
 };
 
+class NbdCore
+{
+	class Impl;
+	Impl *pImpl;
+	NbdCore(NbdCore const &);
+	void operator=(NbdCore const &) {}
+public:
+	NbdCore();
+	~NbdCore();
+	void Init();
+	void Uninit();
+	void ToggleNoborder();
+};
+
 class Target
 {
 public:
@@ -123,11 +137,13 @@ public:
 	bool nobordered;
 	bool isUsingDwm;
 
-	Target()
+	Target() :
+		hWnd(0),
+		style(0),
+		exStyle(0),
+		nobordered(false),
+		isUsingDwm(false)
 	{
-		nobordered = false;
-		// don't have to init other members, they're considered
-		// Write-Only if 'nobordered' is false
 	}
 };
 
@@ -160,12 +176,6 @@ void MenuItemSelectedProc(WORD id);
 bool LoadConfig();
 bool SaveConfig();
 // Core.cpp
-void CoreInit();
-void CoreClosing();
-void ToggleNoborder();
-void DoNoborder(Target *t);
-void UndoNoborder(Target *t);
-PosSize NoborderPosSize(HWND hWnd, const PosSize psClient);
 void BringToTop(HWND hWnd, bool topMost);
 
 typedef struct Cfg

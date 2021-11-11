@@ -9,6 +9,7 @@ FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
+static NbdCore nbdCore;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -64,7 +65,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	}
 	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
 	x_canUseDwm = x_compat_dwmapi_hMod != 0;
-	CoreInit();
+	nbdCore.Init();
 
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
@@ -73,7 +74,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		DispatchMessage(&msg);
 	}
 
-	CoreClosing();
+	nbdCore.Uninit();
 	SaveConfig();
 	UnhookWindowsHookEx(hhk);
 	delete x_pNotifyIcon;
@@ -158,7 +159,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 					fEatKeystroke |= GetAsyncKeyState(VK_RWIN) < 0;
 				}
 			}
-			if (fEatKeystroke) ToggleNoborder();
+			if (fEatKeystroke) nbdCore.ToggleNoborder();
 			break;
 		}
 	}
