@@ -71,27 +71,31 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)out_$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)out_x64_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)int\x64_$(Configuration)\</IntDir>
     <GenerateManifest>false</GenerateManifest>
+    <TargetName>noborder_x64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)out_$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)out_x86_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)int\x86_$(Configuration)\</IntDir>
     <GenerateManifest>false</GenerateManifest>
+    <TargetName>noborder_x86</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)out_$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)out_x64_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)int\x64_$(Configuration)\</IntDir>
     <GenerateManifest>false</GenerateManifest>
+    <TargetName>noborder_x64</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)out_$(Platform)_$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)int\$(Platform)_$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)out_x86_$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)int\x86_$(Configuration)\</IntDir>
     <GenerateManifest>false</GenerateManifest>
+    <TargetName>noborder_x86</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -142,7 +146,7 @@
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <DisableSpecificWarnings>26812;</DisableSpecificWarnings>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -166,7 +170,7 @@
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <SDLCheck>false</SDLCheck>
       <DisableSpecificWarnings>26812;</DisableSpecificWarnings>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
