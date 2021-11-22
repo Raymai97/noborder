@@ -1,0 +1,12 @@
+-nologo
+-subsystem:Windows
+noborder.app.res
+noborder.app.compat_dwmapi.obj
+noborder.app.Core.obj
+noborder.app.DwmWindow.obj
+noborder.app.main.obj
+noborder.app.NotifyIcon.obj
+kernel32.lib
+user32.lib
+gdi32.lib
+shell32.lib
