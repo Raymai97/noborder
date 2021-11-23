@@ -6,22 +6,29 @@ NotifyIcon *x_pNotifyIcon;
 bool x_canUseDwm;
 Cfg x_cfg;
 FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
+FARPROC x_lpfnChangeWindowMessageFilter;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
 static NbdCore nbdCore;
 
-int APIENTRY _tWinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPTSTR lpCmdLine,
-	int nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR, int)
 {
 	// Init
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-	UNREFERENCED_PARAMETER(nCmdShow);
 	x_hInst = hInstance;
 	x_cfg.wantUseAltBksp = true;
+	HMODULE hMod_user32 = GetModuleHandle(_T("user32"));
+	if (hMod_user32)
+	{
+		x_lpfnPhyToLogPtForPerMonitorDPI = GetProcAddress(hMod_user32,
+			"PhysicalToLogicalPointForPerMonitorDPI");
+		x_lpfnChangeWindowMessageFilter = GetProcAddress(hMod_user32,
+			"ChangeWindowMessageFilter");
+	}
+	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
+
+	// Prevent UIPI from intercepting message we send to prev instance.
+	Compat_ChangeWindowMessageFilter(PREVINST_CALL, 1); // MSGFLT_ADD
 
 	// Don't continue if noborder is already running
 	if (HasExistingInstance())
@@ -57,13 +64,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
-	HMODULE hMod_user32 = GetModuleHandle(_T("user32"));
-	if (hMod_user32)
-	{
-		x_lpfnPhyToLogPtForPerMonitorDPI = GetProcAddress(hMod_user32,
-			"PhysicalToLogicalPointForPerMonitorDPI");
-	}
-	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
 	x_canUseDwm = x_compat_dwmapi_hMod != 0;
 	nbdCore.Init();
 
@@ -304,4 +304,11 @@ EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint)
 	typedef HRESULT(WINAPI *fn_t)(HWND, LPPOINT);
 	fn_t fn = (fn_t)x_lpfnPhyToLogPtForPerMonitorDPI;
 	return fn ? fn(hWnd, lpPoint) : E_NOTIMPL;
+}
+
+EXTERN_C BOOL Compat_ChangeWindowMessageFilter(UINT message, DWORD dwFlag)
+{
+	typedef BOOL(WINAPI *fn_t)(UINT, DWORD);
+	fn_t fn = (fn_t)x_lpfnChangeWindowMessageFilter;
+	return fn ? fn(message, dwFlag) : FALSE;
 }

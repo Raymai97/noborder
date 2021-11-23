@@ -193,5 +193,7 @@ extern NotifyIcon *x_pNotifyIcon;
 extern bool x_canUseDwm;
 extern Cfg x_cfg;
 EXTERN_C FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
+EXTERN_C FARPROC x_lpfnChangeWindowMessageFilter;
 
 EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint);
+EXTERN_C BOOL Compat_ChangeWindowMessageFilter(UINT message, DWORD dwFlag);
