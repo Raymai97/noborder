@@ -67,6 +67,12 @@ static const TCHAR *NBD_CMI_ABOUT = _T("About");
 static const TCHAR *NBD_CMI_EXIT = _T("Exit");
 
 
+typedef struct ColorARGB
+{
+	// Alpha, Red, Green, Blue
+	BYTE a, r, g, b;
+} ColorARGB;
+
 class PosSize
 {
 public:
@@ -132,8 +138,9 @@ public:
 	LONG style;
 	LONG exStyle;
 	PosSize psWin;
-	PosSize psNbd;
 	PosSize psCli;
+	PosSize psNbd; // Keep Aspect Ratio Stretch
+	PosSize psNbdFreeStretch; // Free Stretch
 	bool nobordered;
 	bool isUsingDwm;
 
@@ -185,6 +192,9 @@ typedef struct Cfg
 	bool wantUseDwmFormula;
 	bool wantUseAltBksp;
 	bool wantUseWinBksp;
+	// For current release, we use "alpha" value only.
+	// If "alpha" is 0, letterbox is transparent, else it's black opaque.
+	ColorARGB letterboxColor;
 } Cfg;
 
 // Global variables

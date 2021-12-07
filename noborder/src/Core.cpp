@@ -73,7 +73,7 @@ public:
 		t->nobordered = true;
 		t->psWin = PosSize(wInfo.rcWindow);
 		t->psCli = PosSize(wInfo.rcClient);
-		t->psNbd = NoborderPosSize(t->hWnd, t->psCli);
+		GetNbdPosSize(t->hWnd, t->psCli, t->psNbd, t->psNbdFreeStretch);
 		t->style = wInfo.dwStyle;
 		// DON'T USE wInfo.dwExStyle, it gives wrong value!
 		t->exStyle = GetWindowLong(t->hWnd, GWL_EXSTYLE);
@@ -121,7 +121,11 @@ public:
 		}
 	}
 
-	PosSize NoborderPosSize(HWND hWnd, const PosSize psClient)
+	static void GetNbdPosSize(
+		HWND hWnd,
+		PosSize const psClient,
+		PosSize &psKeepAspectRatioStretch,
+		PosSize &psFreeStretch)
 	{
 		// Compute aspect ratio based on ClientSize
 		PosSize ps = psClient;
@@ -139,6 +143,7 @@ public:
 				displayRect = (x_cfg.wantExcludeTaskbar ? mi.rcWork : mi.rcMonitor);
 			}
 		}
+		psFreeStretch = PosSize(displayRect);
 
 		// Compute PosSize of 'nobordered' window
 		PosSize s = PosSize(displayRect);
@@ -156,7 +161,7 @@ public:
 		}
 		ps.X += s.X;
 		ps.Y += s.Y;
-		return ps;
+		psKeepAspectRatioStretch = ps;
 	}
 };
 

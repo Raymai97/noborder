@@ -254,7 +254,7 @@ bool LoadConfig()
 		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
-		BYTE buf[8] = { 0 };
+		BYTE buf[32] = { 0 };
 		DWORD read;
 		bool ok = ReadFile(hFile, buf, sizeof(buf), &read, nullptr) && (read > 3);
 		if (ok)
@@ -272,6 +272,13 @@ bool LoadConfig()
 				x_cfg.wantUseAltBksp = buf[3] != 0;
 				x_cfg.wantUseWinBksp = buf[4] != 0;
 			}
+			if (read >= 9) // new cfg since v1.6
+			{
+				x_cfg.letterboxColor.a = buf[5];
+				x_cfg.letterboxColor.r = buf[6];
+				x_cfg.letterboxColor.g = buf[7];
+				x_cfg.letterboxColor.b = buf[8];
+			}
 		}
 		CloseHandle(hFile);
 		return ok;
@@ -285,14 +292,18 @@ bool SaveConfig()
 		FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile)
 	{
-		BYTE buf[8] = { 0 };
+		BYTE buf[32] = { 0 };
 		DWORD written;
 		buf[0] = x_cfg.wantExcludeTaskbar;
 		buf[1] = (BYTE)(x_cfg.onTopMode);
 		buf[2] = x_cfg.wantUseDwmFormula;
 		buf[3] = x_cfg.wantUseAltBksp;
 		buf[4] = x_cfg.wantUseWinBksp;
-		bool ok = WriteFile(hFile, buf, 5, &written, nullptr) && (written == 5);
+		buf[5] = x_cfg.letterboxColor.a;
+		buf[6] = x_cfg.letterboxColor.r;
+		buf[7] = x_cfg.letterboxColor.g;
+		buf[8] = x_cfg.letterboxColor.b;
+		bool ok = WriteFile(hFile, buf, 9, &written, nullptr) && (written == 9);
 		CloseHandle(hFile);
 		return ok;
 	}

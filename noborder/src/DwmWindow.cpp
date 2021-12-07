@@ -12,7 +12,6 @@ DwmWindow::DwmWindow() :
 	wcex.lpfnWndProc = DwmWindow::WndProc;
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.hbrBackground = CreateSolidBrush(RGB(0, 0, 0));
 	if (!RegisterClassEx(&wcex)) { MSGERR("FATAL: DwmWindow RegisterClassEx failed!"); PostQuitMessage(1); }
 	HWND hWndParent = nullptr;
 	HMENU hMenu = nullptr;
@@ -63,7 +62,9 @@ void DwmWindow::Start(Target *pTarget, bool isTopMost)
 	this->topMost = isTopMost;
 	this->dontFocus = false;
 	// Make dwmWindow looks like nobordered target...
-	PosSize ps = this->target->psNbd;
+	PosSize const &ps = (x_cfg.letterboxColor.a > 0)
+		? this->target->psNbdFreeStretch
+		: this->target->psNbd;
 	SetWindowPos(this->hWnd, HWND_TOP, ps.X, ps.Y, ps.Width, ps.Height, SWP_SHOWWINDOW);
 	BringToTop(this->hWnd, this->topMost);
 	// Make target invisible...
@@ -104,7 +105,6 @@ void DwmWindow::UpdateThumb()
 {
 	// NOTE: Set rcSource explicitly to avoid weird problem
 	PosSize psSrc = this->target->psCli;
-	PosSize psDest = this->target->psNbd;
 	DWM_THUMBNAIL_PROPERTIES props;
 	props.dwFlags = DWM_TNP_VISIBLE | DWM_TNP_SOURCECLIENTAREAONLY | DWM_TNP_RECTDESTINATION | DWM_TNP_RECTSOURCE;
 	props.fSourceClientAreaOnly = true; // if false, DWM scale ugly!
@@ -122,7 +122,15 @@ void DwmWindow::UpdateThumb()
 		}
 	}
 	SetRect(&props.rcSource, 0, 0, psSrc.Width, psSrc.Height);
-	SetRect(&props.rcDestination, 0, 0, psDest.Width, psDest.Height);
+	if (x_cfg.letterboxColor.a > 0)
+	{
+		props.rcDestination = this->target->psNbd.ToRECT();
+	}
+	else
+	{
+		PosSize const &ps = this->target->psNbd;
+		SetRect(&props.rcDestination, 0, 0, ps.Width, ps.Height);
+	}
 	Compat_DwmUpdateThumbnailProperties(this->hThumb, &props);
 }
 
@@ -185,6 +193,22 @@ LRESULT CALLBACK DwmWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		else if (msg == WM_DWMCOMPOSITIONCHANGED)
 		{
 			me->Stop();
+		}
+		else if (msg == WM_ERASEBKGND)
+		{
+			ColorARGB const &c = x_cfg.letterboxColor;
+			if (c.a > 0)
+			{
+				HDC const hdc = (HDC)wParam;
+				HBRUSH hbr = CreateSolidBrush(RGB(c.r, c.g, c.b));
+				if (hbr)
+				{
+					RECT rc;
+					GetClientRect(hWnd, &rc);
+					FillRect(hdc, &rc, hbr);
+					DeleteObject(hbr);
+				}
+			}
 		}
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
