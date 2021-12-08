@@ -112,8 +112,8 @@ void DwmWindow::UpdateThumb()
 	if (x_lpfnPhyToLogPtForPerMonitorDPI)
 	{
 		POINT posPhy, posLog;
-		posPhy.x = this->target->psWin.X; posLog.x = posPhy.x;
-		posPhy.y = this->target->psWin.Y; posLog.y = posPhy.y;
+		posPhy.x = this->target->psWin.X + 1; posLog.x = posPhy.x;
+		posPhy.y = this->target->psWin.Y + 1; posLog.y = posPhy.y;
 		HRESULT hr = Compat_PhyToLogPtForPerMonitorDPI(this->target->hWnd, &posLog);
 		if (SUCCEEDED(hr))
 		{
