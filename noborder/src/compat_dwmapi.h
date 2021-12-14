@@ -23,7 +23,8 @@ typedef struct _DWM_THUMBNAIL_PROPERTIES
     BOOL fSourceClientAreaOnly;
 } DWM_THUMBNAIL_PROPERTIES, *PDWM_THUMBNAIL_PROPERTIES;
 
-EXTERN_C HMODULE x_compat_dwmapi_hMod;
+EXTERN_C void InitCompat_dwmapi(
+    HMODULE hMod_dwmapi);
 
 EXTERN_C HRESULT Compat_DwmIsCompositionEnabled(
     BOOL *pfEnabled);

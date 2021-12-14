@@ -109,7 +109,7 @@ void DwmWindow::UpdateThumb()
 	props.dwFlags = DWM_TNP_VISIBLE | DWM_TNP_SOURCECLIENTAREAONLY | DWM_TNP_RECTDESTINATION | DWM_TNP_RECTSOURCE;
 	props.fSourceClientAreaOnly = true; // if false, DWM scale ugly!
 	props.fVisible = true;
-	if (x_lpfnPhyToLogPtForPerMonitorDPI)
+	if (x_user32__PhyToLogPtForPerMonitorDPI)
 	{
 		POINT posPhy, posLog;
 		posPhy.x = this->target->psWin.X + 1; posLog.x = posPhy.x;

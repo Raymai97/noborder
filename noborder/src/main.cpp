@@ -5,8 +5,8 @@ HINSTANCE x_hInst;
 NotifyIcon *x_pNotifyIcon;
 bool x_canUseDwm;
 Cfg x_cfg;
-FARPROC x_lpfnPhyToLogPtForPerMonitorDPI;
-FARPROC x_lpfnChangeWindowMessageFilter;
+FARPROC x_user32__PhyToLogPtForPerMonitorDPI;
+FARPROC x_user32__ChangeWindowMessageFilter;
 
 // Only this cpp
 static TCHAR cfgFilePath[MAX_PATH];
@@ -18,14 +18,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR, int)
 	x_hInst = hInstance;
 	x_cfg.wantUseAltBksp = true;
 	HMODULE hMod_user32 = GetModuleHandle(_T("user32"));
+	HMODULE hMod_dwmapi = LoadLibrary(_T("dwmapi"));
 	if (hMod_user32)
 	{
-		x_lpfnPhyToLogPtForPerMonitorDPI = GetProcAddress(hMod_user32,
+		x_user32__PhyToLogPtForPerMonitorDPI = GetProcAddress(hMod_user32,
 			"PhysicalToLogicalPointForPerMonitorDPI");
-		x_lpfnChangeWindowMessageFilter = GetProcAddress(hMod_user32,
+		x_user32__ChangeWindowMessageFilter = GetProcAddress(hMod_user32,
 			"ChangeWindowMessageFilter");
 	}
-	x_compat_dwmapi_hMod = LoadLibrary(TEXT("dwmapi"));
+	InitCompat_dwmapi(hMod_dwmapi);
 
 	// Prevent UIPI from intercepting message we send to prev instance.
 	Compat_ChangeWindowMessageFilter(PREVINST_CALL, 1); // MSGFLT_ADD
@@ -64,7 +65,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR, int)
 	LoadConfig();
 
 	// Check OS & Init Core.cpp
-	x_canUseDwm = x_compat_dwmapi_hMod != 0;
+	x_canUseDwm = hMod_dwmapi != 0;
 	nbdCore.Init();
 
 	MSG msg;
@@ -313,13 +314,13 @@ bool SaveConfig()
 EXTERN_C HRESULT Compat_PhyToLogPtForPerMonitorDPI(HWND hWnd, LPPOINT lpPoint)
 {
 	typedef HRESULT(WINAPI *fn_t)(HWND, LPPOINT);
-	fn_t fn = (fn_t)x_lpfnPhyToLogPtForPerMonitorDPI;
+	fn_t fn = (fn_t)x_user32__PhyToLogPtForPerMonitorDPI;
 	return fn ? fn(hWnd, lpPoint) : E_NOTIMPL;
 }
 
 EXTERN_C BOOL Compat_ChangeWindowMessageFilter(UINT message, DWORD dwFlag)
 {
 	typedef BOOL(WINAPI *fn_t)(UINT, DWORD);
-	fn_t fn = (fn_t)x_lpfnChangeWindowMessageFilter;
+	fn_t fn = (fn_t)x_user32__ChangeWindowMessageFilter;
 	return fn ? fn(message, dwFlag) : FALSE;
 }
