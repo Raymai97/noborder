@@ -1,120 +1,40 @@
-// Microsoft Visual C++ generated resource script.
-//
+#include <winresrc.h>
 #include "resource.h"
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
-#include "winresrc.h"
-
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
-
-/////////////////////////////////////////////////////////////////////////////
-// Chinese (Simplified, PRC) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
-LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE 
-BEGIN
-    "resource.h\0"
-END
-
-2 TEXTINCLUDE 
-BEGIN
-    "#include ""winres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE 
-BEGIN
-    "\r\n"
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-#endif    // Chinese (Simplified, PRC) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Neutral (Default) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUD)
 LANGUAGE LANG_NEUTRAL, SUBLANG_DEFAULT
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
 
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_NOBORDER            ICON                    "noborder_icon.ico"
+101 ICON "noborder_icon.ico"
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
+1 VERSIONINFO
+FILEVERSION 1,6,0,0
+PRODUCTVERSION 1,6,0,0
+FILEOS 0x40004
+FILETYPE 0x1
+{
+BLOCK "StringFileInfo"
+{
+	BLOCK "040004b0"
+	{
+		VALUE "CompanyName", "MaiSoft"
+		VALUE "FileDescription", "noborder, the 'Borderless' mode switch"
+		VALUE "FileVersion", "1.6.0.0"
+		VALUE "InternalName", "noborder.exe"
+		VALUE "LegalCopyright", "Copyright (C) MaiSoft 2021"
+		VALUE "OriginalFilename", "noborder.exe"
+		VALUE "ProductName", "noborder"
+		VALUE "ProductVersion", "1.6.0.0"
+	}
+}
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,6,0,0
- PRODUCTVERSION 1,6,0,0
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040004b0"
-        BEGIN
-            VALUE "CompanyName", "MaiSoft"
-            VALUE "FileDescription", "noborder, the 'Borderless' mode switch"
-            VALUE "FileVersion", "1.6.0.0"
-            VALUE "InternalName", "noborder.exe"
-            VALUE "LegalCopyright", "Copyright (C) MaiSoft 2021"
-            VALUE "OriginalFilename", "noborder.exe"
-            VALUE "ProductName", "noborder"
-            VALUE "ProductVersion", "1.6.0.0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x400, 1200
-    END
-END
-
-#endif    // Neutral (Default) resources
-/////////////////////////////////////////////////////////////////////////////
-
-// MANIFEST FILE
-1  24  "app_manifest.min"
+BLOCK "VarFileInfo"
+{
+	VALUE "Translation", 0x0400 0x04B0  
+}
+}
 
 
-#ifndef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 3 resource.
-//
-
-
-/////////////////////////////////////////////////////////////////////////////
-#endif    // not APSTUDIO_INVOKED
-
+#undef RT_MANIFEST
+#define RT_MANIFEST  (24)
+1  RT_MANIFEST  "app_manifest.min"
