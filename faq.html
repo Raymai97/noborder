@@ -33,29 +33,12 @@
 					</div>
 				</div>
 				<div class="box">
-					<div class="boxTitle">Alt+Backspace (or other hotkey) does nothing! What to do?</div>
+					<div class="boxTitle">Alt+Backspace does nothing! What to do?</div>
 					<div class="boxText">
 						&bull; Restart noborder.<p>
 						&bull; Restart noborder as administrator.<p>
 						&bull; Restart your computer.<p>
 						&bull; If all else has failed (very unlikely), kindly <a href="./aboutme.html">send me an email</a>, telling me your game name etc.
-					</div>
-				</div>
-				<div class="box">
-					<div class="boxTitle">What happened to noborder tiny?</div>
-					<div class="boxText">
-						I've rewritten the codebase using modern C++, and it doesn't play well with MSVC6.0.<p>
-						Initially, I was intentionally using C++ as least as possible in order to make the code compatible with MSVC6.0. Why build with MSVC6.0? Because from user's perspective: <p>
-						&bull; Super tiny EXE<br>
-						&bull; It just works, no 'XXX.dll is missing' bullshit<p>
-						This was why I've made 'noborder tiny', but no more. I still like small EXE but if it means no modern C++, I no longer think it's worth to uncool my code to satisfy MSVC6.0 so I've decided to discontinue it. If you still need it for whatever reason, you may download v1.3.1, which contains both 'noborder' and 'noborder tiny'.<p>
-						<span class="note">Note: v1.3.1 of 'noborder tiny' (MSVC6.0 build) has a bug that doesn't exist in 'noborder' (MSVC2015 build). It will crash if the DWM state changed before any 'noborder' option.</span>
-					</div>
-				</div>
-				<div class="box">
-					<div class="boxTitle">Why rewritten in modern C++?</div>
-					<div class="boxText">
-						For better error-handling, more maintainable, reusable and clean code. It might be PITA in short term, but I think it will lead to a better future. The refactored code is adhere to OOP design and no longer suffer from unnecessary cyclic dependencies. If you read the code, you will be surprised how easily the functionality code can be ported to DLL library if you want to.
 					</div>
 				</div>
 			</div>
