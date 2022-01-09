@@ -184,14 +184,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\boon_layeredwindow.c" />
     <ClCompile Include="src\compat_dwmapi.c" />
     <ClCompile Include="src\Core.cpp" />
+    <ClCompile Include="src\CursorOverlay.cpp" />
     <ClCompile Include="src\DwmWindow.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\NotifyIcon.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\boon_layeredwindow.h" />
     <ClInclude Include="src\compat_dwmapi.h" />
+    <ClInclude Include="src\CursorOverlay.hpp" />
     <ClInclude Include="src\noborder.h" />
     <ClInclude Include="src\NotifyIcon.h" />
     <ClInclude Include="src\resource.h" />

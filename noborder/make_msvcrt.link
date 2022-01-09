@@ -1,7 +1,9 @@
 -nologo
 -subsystem:Windows
 noborder.app.res
+noborder.app.boon_layeredwindow.obj
 noborder.app.compat_dwmapi.obj
+noborder.app.CursorOverlay.obj
 noborder.app.Core.obj
 noborder.app.DwmWindow.obj
 noborder.app.main.obj

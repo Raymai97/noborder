@@ -3,6 +3,7 @@
 #include <shellapi.h>
 #include <tchar.h>
 #include "compat_dwmapi.h"
+#include "CursorOverlay.hpp"
 #include "NotifyIcon.h"
 #include "resource.h"
 
@@ -143,14 +144,16 @@ public:
 	PosSize psNbdFreeStretch; // Free Stretch
 	bool nobordered;
 	bool isUsingDwm;
+	bool isUsingDwmFormulaWithMouse;
+	struct {
+		double scaleX;
+		double scaleY;
+	} cursorOverlay;
+	bool hadDwmShrinkTemporarily;
 
-	Target() :
-		hWnd(0),
-		style(0),
-		exStyle(0),
-		nobordered(false),
-		isUsingDwm(false)
+	Target()
 	{
+		memset(this, 0, sizeof(*this));
 	}
 };
 
@@ -163,9 +166,12 @@ private:
 	// 'ing' controls CheckTargetProc while-loop
 	// 'dontFocus' is True if 'Stop()' is caused by target's pop-up
 	bool ing, topMost, dontFocus;
+	CursorOverlay cursorOverlay;
+
 	void UpdateThumb();
 	static DWORD WINAPI CheckTargetProc(LPVOID param);
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void RepositionCursorOverlay();
 public:
 	DwmWindow();
 	~DwmWindow();
@@ -195,6 +201,7 @@ typedef struct Cfg
 	// For current release, we use "alpha" value only.
 	// If "alpha" is 0, letterbox is transparent, else it's black opaque.
 	ColorARGB letterboxColor;
+	bool wantDwmFormulaWithMouse;
 } Cfg;
 
 // Global variables

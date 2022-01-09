@@ -1,6 +1,6 @@
 @echo off
 
-set WINSDK_HOME=C:\q\DevEnv\WinSDK_Win2003R2
+set WINSDK_HOME=D:\DevEnv\WinSDK_Win2003R2
 set PATH=%WINSDK_HOME%\Bin;%MSVC1998_HOME%\Bin
 set INCLUDE=%WINSDK_HOME%\Include;%MSVC1998_HOME%\Include
 set LIB=%WINSDK_HOME%\Lib;%MSVC1998_HOME%\Lib
@@ -18,8 +18,10 @@ mkdir "%OUT_PATH%" || goto gg
 echo.Building resource file...
 rc -fo %INT_PATH%\noborder.app.res %SRC_PATH%\noborder.rc || goto gg
 
+call :compile boon_layeredwindow.c || goto gg
 call :compile compat_dwmapi.c || goto gg
 call :compile Core.cpp || goto gg
+call :compile CursorOverlay.cpp || goto gg
 call :compile DwmWindow.cpp || goto gg
 call :compile main.cpp || goto gg
 call :compile NotifyIcon.cpp || goto gg

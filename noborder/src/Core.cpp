@@ -31,6 +31,7 @@ public:
 		}
 		if (dwmWindow)
 		{
+			Sleep(200); // prevent crash
 			delete dwmWindow;
 			dwmWindow = nullptr;
 		}
@@ -78,6 +79,7 @@ public:
 		// DON'T USE wInfo.dwExStyle, it gives wrong value!
 		t->exStyle = GetWindowLong(t->hWnd, GWL_EXSTYLE);
 		t->isUsingDwm = x_cfg.wantUseDwmFormula;
+		t->isUsingDwmFormulaWithMouse = x_cfg.wantDwmFormulaWithMouse;
 		bool onTop = (
 			x_cfg.onTopMode == OnTopMode_Always ? true :
 			x_cfg.onTopMode == OnTopMode_Never ? false :

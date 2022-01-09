@@ -273,12 +273,13 @@ bool LoadConfig()
 				x_cfg.wantUseAltBksp = buf[3] != 0;
 				x_cfg.wantUseWinBksp = buf[4] != 0;
 			}
-			if (read >= 9) // new cfg since v1.6
+			if (read >= 10) // new cfg since v1.6
 			{
 				x_cfg.letterboxColor.a = buf[5];
 				x_cfg.letterboxColor.r = buf[6];
 				x_cfg.letterboxColor.g = buf[7];
 				x_cfg.letterboxColor.b = buf[8];
+				x_cfg.wantDwmFormulaWithMouse = buf[9] != 0;
 			}
 		}
 		CloseHandle(hFile);
@@ -304,7 +305,8 @@ bool SaveConfig()
 		buf[6] = x_cfg.letterboxColor.r;
 		buf[7] = x_cfg.letterboxColor.g;
 		buf[8] = x_cfg.letterboxColor.b;
-		bool ok = WriteFile(hFile, buf, 9, &written, nullptr) && (written == 9);
+		buf[9] = x_cfg.wantDwmFormulaWithMouse;
+		bool ok = WriteFile(hFile, buf, 10, &written, nullptr) && (written == 10);
 		CloseHandle(hFile);
 		return ok;
 	}
